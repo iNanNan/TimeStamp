@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ViewPagerIndicator -->
+    <declare-styleable name="ViewPagerIndicator">
+        <attr name="setShowTabs" format="integer"/>
+        <attr name="setIndicatorWidth" format="dimension"/>
+        <attr name="setIndicatorHeight" format="dimension"/>
+        <attr name="setIndicatorColor" format="color"/>
+        <attr name="indicatorBackground" format="boolean"/>
+        <attr name="setIndicatorBackground" format="color"/>
+        <attr name="setOnTabTextColor" format="color"/>
+        <attr name="setOffTabTextColor" format="color"/>
+        <attr name="setIndicatorPaddingBottom" format="dimension"/>
+        <attr name="tabLayout" format="reference"/>
+    </declare-styleable>
+</resources>
