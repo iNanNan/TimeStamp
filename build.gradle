@@ -21,3 +21,32 @@ allprojects {
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
+
+def supportVersion = "23.2.0"
+def daggerVersion = "2.0.2"
+
+project.ext {
+    buildToolsVersion = "23.0.2"
+    compileSdkVersion = 23
+    minSdkVersion = 15
+    targetSdkVersion = 23
+    versionCode = 1
+    versionName = "1.0.0"
+    abortOnLintError = false
+    checkLintRelease = false
+    useJack = false
+
+    javaVersion = JavaVersion.VERSION_1_7
+
+    libSupportV4 = "com.android.support:support-v4:${supportVersion}"
+    libSupportDesign = "com.android.support:design:${supportVersion}"
+    libSupportAppcompat = "com.android.support:appcompat-v7:${supportVersion}"
+    libSupportRecyclerview = "com.android.support:recyclerview-v7:${supportVersion}"
+
+    libGson = "com.google.code.gson:gson:2.4"
+    libRxJava = "io.reactivex:rxjava:1.1.1"
+    libEventBus = "org.greenrobot:eventbus:3.0.0"
+    libDagger = "com.google.dagger:dagger:${daggerVersion}"
+    libDaggerCompiler = "com.google.dagger:dagger-compiler:${daggerVersion}"
+    libOkHttpLoggingInterceptor = "com.squareup.okhttp3:logging-interceptor:3.0.0-RC1"
+}
