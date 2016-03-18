@@ -1,25 +1,43 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 23
-    buildToolsVersion "23.0.2"
+    compileSdkVersion rootProject.ext.compileSdkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
 
     defaultConfig {
-        minSdkVersion 15
-        targetSdkVersion 23
-        versionCode 1
-        versionName "1.0"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode rootProject.ext.versionCode
+        versionName rootProject.ext.versionName
     }
+
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    compileOptions {
+        productFlavors {
+        }
+        sourceCompatibility rootProject.ext.javaVersion
+        targetCompatibility rootProject.ext.javaVersion
+    }
 }
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     testCompile 'junit:junit:4.12'
-    compile 'com.android.support:appcompat-v7:23.2.0'
+    compile rootProject.ext.libSupportV4
+    compile rootProject.ext.libSupportDesign
+    compile rootProject.ext.libSupportAppcompat
+    compile rootProject.ext.libSupportRecyclerview
+
+    compile rootProject.ext.libGson
+    compile rootProject.ext.libRxJava
+    compile rootProject.ext.libEventBus
+    compile rootProject.ext.libDagger
+    compile rootProject.ext.libDaggerCompiler
+    compile rootProject.ext.libOkHttpLoggingInterceptor
 }
