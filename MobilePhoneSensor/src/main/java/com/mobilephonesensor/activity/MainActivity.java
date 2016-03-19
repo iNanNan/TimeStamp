@@ -14,6 +14,7 @@ import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.LinearLayout;
 
+import com.base.presenter.Presenter;
 import com.base.util.ScreenUtil;
 import com.mobilephonesensor.R;
 import com.mobilephonesensor.adapter.MainPagerFragmentAdapter;
@@ -39,6 +40,10 @@ public class MainActivity extends SupperActivity {
     }
 
     @Override
+    protected void onPresenterComplete(Presenter presenter) {
+
+    }
+
     protected void bindView() {
         mViewPager = find(R.id.act_main_view_page);
         mDrawerLayout = find(R.id.act_main_drawer);
@@ -55,6 +60,7 @@ public class MainActivity extends SupperActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        bindView();
         getSupportActionBar().setHomeButtonEnabled(true);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         initToggle();
@@ -155,7 +161,6 @@ public class MainActivity extends SupperActivity {
             LinearLayout tabLayout = (LinearLayout) inflater.inflate(R.layout.layout_main_tab_item, getViewGroup());
             tabViews.add(tabLayout);
         }
-        mPageIndicator.setTabViews(tabViews);
         mPageIndicator.setViewPager(mViewPager, 0);
     }
 }

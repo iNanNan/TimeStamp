@@ -1,5 +1,6 @@
 package com.mobilephonesensor.fragment;
 
+import com.base.presenter.Presenter;
 import com.mobilephonesensor.R;
 import com.mobilephonesensor.base.SupperFragment;
 
@@ -14,7 +15,7 @@ public class MainActivityDocFragment extends SupperFragment {
     }
 
     @Override
-    protected void bindView() {
-
+    protected void onPresenterComplete(Presenter presenter) {
     }
+
 }
