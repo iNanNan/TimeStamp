@@ -13,11 +13,12 @@ import android.view.ViewGroup;
 import com.base.presenter.Presenter;
 import com.base.presenter.PresenterFactory;
 import com.base.presenter.PresenterLoader;
+import com.base.presenter.PresenterView;
 
 /**
  * Created by heng on 16-3-16.
  */
-public abstract class BaseActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Presenter> {
+public abstract class BaseActivity extends AppCompatActivity implements PresenterView, LoaderManager.LoaderCallbacks<Presenter> {
 
     private final static int ACT_LOADER_ID = 1;
 
@@ -27,8 +28,7 @@ public abstract class BaseActivity extends AppCompatActivity implements LoaderMa
 
     protected abstract int getContentResId();
 
-    /** 实例化控件在这里执行 */
-    protected abstract void bindView();
+    protected abstract void onPresenterComplete(Presenter p);
 
     protected PresenterFactory obtainPresenterFactory(){
         return null;
@@ -38,7 +38,6 @@ public abstract class BaseActivity extends AppCompatActivity implements LoaderMa
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(getContentResId());
-        bindView();
         setSupportActionBar(onCreateToolbar());
         mPresenterFactory = obtainPresenterFactory();
         if (mPresenterFactory != null) {
@@ -59,14 +58,6 @@ public abstract class BaseActivity extends AppCompatActivity implements LoaderMa
     }
 
     @Override
-    public void onStart() {
-        if (mPresenter != null) {
-            mPresenter.onViewAttach(this);
-        }
-        super.onStart();
-    }
-
-    @Override
     public void onStop() {
         if (mPresenter != null) {
             mPresenter.onViewDetach();
@@ -83,6 +74,8 @@ public abstract class BaseActivity extends AppCompatActivity implements LoaderMa
     public void onLoadFinished(Loader<Presenter> loader, Presenter data) {
         if (mPresenter == null) {
             this.mPresenter = data;
+            this.mPresenter.onViewAttach(this);
+            onPresenterComplete(mPresenter);
         }
     }
 

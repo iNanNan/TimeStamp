@@ -12,11 +12,12 @@ import android.view.ViewGroup;
 import com.base.presenter.Presenter;
 import com.base.presenter.PresenterFactory;
 import com.base.presenter.PresenterLoader;
+import com.base.presenter.PresenterView;
 
 /**
  * Created by heng on 16-3-16.
  */
-public abstract class BaseFragment extends Fragment implements LoaderManager.LoaderCallbacks<Presenter> {
+public abstract class BaseFragment extends Fragment implements PresenterView, LoaderManager.LoaderCallbacks<Presenter> {
 
     private final static int FRAG_LOADER_ID = 2;
 
@@ -28,7 +29,7 @@ public abstract class BaseFragment extends Fragment implements LoaderManager.Loa
 
     protected abstract int getContentResId();
 
-    protected abstract void bindView();
+    protected abstract void onPresenterComplete(Presenter p);
 
     protected PresenterFactory obtainPresenterFactory() {
         return null;
@@ -53,15 +54,6 @@ public abstract class BaseFragment extends Fragment implements LoaderManager.Loa
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        bindView();
-    }
-
-    @Override
-    public void onStart() {
-        if (mPresenter != null) {
-            mPresenter.onViewAttach(this);
-        }
-        super.onStart();
     }
 
     @Override
@@ -89,6 +81,8 @@ public abstract class BaseFragment extends Fragment implements LoaderManager.Loa
     public void onLoadFinished(Loader<Presenter> loader, Presenter data) {
         if (mPresenter == null) {
             this.mPresenter = data;
+            this.mPresenter.onViewAttach(this);
+            onPresenterComplete(mPresenter);
         }
     }
 
