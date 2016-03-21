@@ -18,7 +18,7 @@ import com.base.presenter.PresenterView;
 /**
  * Created by heng on 16-3-16.
  */
-public abstract class BaseActivity extends AppCompatActivity implements PresenterView, LoaderManager.LoaderCallbacks<Presenter> {
+public abstract class BaseActivity extends  AppCompatActivity implements PresenterView, LoaderManager.LoaderCallbacks<Presenter> {
 
     private final static int ACT_LOADER_ID = 1;
 
@@ -28,7 +28,7 @@ public abstract class BaseActivity extends AppCompatActivity implements Presente
 
     protected abstract int getContentResId();
 
-    protected abstract void onPresenterComplete(Presenter p);
+    protected void onPresenterComplete(Presenter p){}
 
     protected PresenterFactory obtainPresenterFactory(){
         return null;
@@ -38,7 +38,9 @@ public abstract class BaseActivity extends AppCompatActivity implements Presente
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(getContentResId());
-        setSupportActionBar(onCreateToolbar());
+        if (onCreateToolbar() != null) {
+            setSupportActionBar(onCreateToolbar());
+        }
         mPresenterFactory = obtainPresenterFactory();
         if (mPresenterFactory != null) {
             getSupportLoaderManager().initLoader(ACT_LOADER_ID, null, this);

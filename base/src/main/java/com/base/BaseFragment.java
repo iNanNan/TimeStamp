@@ -29,7 +29,7 @@ public abstract class BaseFragment extends Fragment implements PresenterView, Lo
 
     protected abstract int getContentResId();
 
-    protected abstract void onPresenterComplete(Presenter p);
+    protected void onPresenterComplete(Presenter p){}
 
     protected PresenterFactory obtainPresenterFactory() {
         return null;
