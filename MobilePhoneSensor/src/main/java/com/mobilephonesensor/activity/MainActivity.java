@@ -1,5 +1,6 @@
 package com.mobilephonesensor.activity;
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.PersistableBundle;
 import android.support.design.widget.CoordinatorLayout;
@@ -12,13 +13,16 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewTreeObserver;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import com.base.presenter.Presenter;
 import com.base.util.ScreenUtil;
 import com.mobilephonesensor.R;
 import com.mobilephonesensor.adapter.MainPagerFragmentAdapter;
 import com.mobilephonesensor.base.SupperActivity;
+import com.mobilephonesensor.model.Tab;
 import com.mobilephonesensor.widgets.ViewPagerIndicator;
 
 import java.util.ArrayList;
@@ -155,12 +159,28 @@ public class MainActivity extends SupperActivity {
     }
 
     private void createBottomTabs() {
+        final int highColor = Color.parseColor("#FF0000");
+        final int normalColor = Color.parseColor("#FFFFFF");
         LayoutInflater inflater = loaderInflater();
-        List<View> tabViews = new ArrayList<>(3);
+        List<Tab> tabViews = new ArrayList<>(3);
         for (int i = 0; i< 3; i++) {
             LinearLayout tabLayout = (LinearLayout) inflater.inflate(R.layout.layout_main_tab_item, getViewGroup());
-            tabViews.add(tabLayout);
+            final ImageView icon = (ImageView) tabLayout.findViewById(R.id.layout_main_tab_icon);
+            final TextView text = (TextView) tabLayout.findViewById(R.id.layout_main_tab_text);
+            Tab tab = new Tab(false, tabLayout);
+            tab.setOnTabListener(new Tab.OnTabListener() {
+                @Override
+                public void onTab(boolean isChecked) {
+                    if (isChecked) {
+                        text.setTextColor(highColor);
+                    } else {
+                        text.setTextColor(normalColor);
+                    }
+                }
+            });
+            tabViews.add(tab);
         }
+        mPageIndicator.setTabs(tabViews);
         mPageIndicator.setViewPager(mViewPager, 0);
     }
 }

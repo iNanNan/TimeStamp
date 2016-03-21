@@ -24,6 +24,9 @@ public class Tab {
 
     public void setIsChecked(boolean isChecked) {
         this.isChecked = isChecked;
+        if (mListener != null) {
+            mListener.onTab(isChecked);
+        }
     }
 
     public View getTabView() {
@@ -32,5 +35,15 @@ public class Tab {
 
     public void setTabView(View tabView) {
         this.tabView = tabView;
+    }
+
+    private OnTabListener mListener;
+
+    public void setOnTabListener(OnTabListener listener) {
+        this.mListener = listener;
+    }
+
+    public interface OnTabListener {
+        void onTab(boolean isChecked);
     }
 }

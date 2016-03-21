@@ -20,6 +20,9 @@ import com.mobilephonesensor.model.Tab;
 import java.util.List;
 
 public class ViewPagerIndicator extends LinearLayout {
+
+    private List<Tab> tabs;
+
     /**
      * 绘制指示器的画笔
      */
@@ -53,15 +56,9 @@ public class ViewPagerIndicator extends LinearLayout {
      */
     private ViewPager mViewPager;
     /**
-     * 标题正常时的颜色
-     */
-    private static final int COLOR_TEXT_NORMAL = 0xFF999999;
-    private int mTextNormalColor;
-    /**
      * 标题选中时的颜色
      */
-    private static final int COLOR_TEXT_HIGHLIGHT_COLOR = 0xFF18B0F4;
-    private int mTextHighlightColor;
+    private static final int DEFAULT_INDICATOR_COLOR = 0xFF18B0F4;
     /**
      * 是否设置指示器背景
      */
@@ -92,9 +89,7 @@ public class ViewPagerIndicator extends LinearLayout {
         }
         mIndicatorWidth = (int) a.getDimension(R.styleable.ViewPagerIndicator_setIndicatorWidth, 60);
         mIndicatorHeight = (int) a.getDimension(R.styleable.ViewPagerIndicator_setIndicatorHeight,6);
-        mIndicatorColor = a.getColor(R.styleable.ViewPagerIndicator_setIndicatorColor,COLOR_TEXT_HIGHLIGHT_COLOR);
-        mTextNormalColor = a.getColor(R.styleable.ViewPagerIndicator_setOffTabTextColor,COLOR_TEXT_NORMAL);
-        mTextHighlightColor = a.getColor(R.styleable.ViewPagerIndicator_setOnTabTextColor,COLOR_TEXT_HIGHLIGHT_COLOR);
+        mIndicatorColor = a.getColor(R.styleable.ViewPagerIndicator_setIndicatorColor, DEFAULT_INDICATOR_COLOR);
         isBackground = a.getBoolean(R.styleable.ViewPagerIndicator_indicatorBackground,false);
         if (isBackground) {
             backgroundColor = a.getColor(R.styleable.ViewPagerIndicator_setIndicatorBackground, DEFAULT_INDICATOR_BACKGROUND);
@@ -165,13 +160,14 @@ public class ViewPagerIndicator extends LinearLayout {
     }
 
     public void setTabs(List<Tab> tabs) {
-        createTabs(tabs);
+        this.tabs = tabs;
+        createTabs();
     }
 
     /**
      * 设置tab的标题内容
      */
-    private void createTabs(List<Tab> tabs) {
+    private void createTabs() {
         // 如果传入的list有值，则移除布局文件中设置的view
         if (tabs == null || tabs.size() == 0)
             return;
@@ -217,11 +213,8 @@ public class ViewPagerIndicator extends LinearLayout {
         mViewPager.addOnPageChangeListener(new OnPageChangeListener() {
             @Override
             public void onPageSelected(int position) {
-                // 设置字体颜色高亮
-                resetTextViewColor();
-                highLightTextView(position);
+                resetTabState(position);
 
-                // 回调
                 if (onPageChangeListener != null) {
                     onPageChangeListener.onPageSelected(position);
                 }
@@ -230,10 +223,8 @@ public class ViewPagerIndicator extends LinearLayout {
             @Override
             public void onPageScrolled(int position, float positionOffset,
                                        int positionOffsetPixels) {
-                // 滚动
                 scroll(position, positionOffset);
 
-                // 回调
                 if (onPageChangeListener != null) {
                     onPageChangeListener.onPageScrolled(position,
                             positionOffset, positionOffsetPixels);
@@ -243,39 +234,28 @@ public class ViewPagerIndicator extends LinearLayout {
 
             @Override
             public void onPageScrollStateChanged(int state) {
-                // 回调
                 if (onPageChangeListener != null) {
                     onPageChangeListener.onPageScrollStateChanged(state);
                 }
 
             }
         });
-        // 设置当前页
         mViewPager.setCurrentItem(pos);
-        // 高亮
-        highLightTextView(pos);
+        resetTabState(pos);
     }
 
     /**
-     * 高亮文本
-     *
-     * @param position
+     * 设置tab高亮
+     * @param index
      */
-    protected void highLightTextView(int position) {
-        View view = getChildAt(position);
-        if (view instanceof TextView) {
-            ((TextView) view).setTextColor(mTextHighlightColor);
-        }
-    }
-
-    /**
-     * 重置文本颜色
-     */
-    private void resetTextViewColor() {
-        for (int i = 0; i < getChildCount(); i++) {
-            View view = getChildAt(i);
-            if (view instanceof TextView) {
-                ((TextView) view).setTextColor(mTextNormalColor);
+    private void resetTabState(int index) {
+        int size = tabs.size();
+        for (int i = 0; i < size; i++) {
+            Tab tab = tabs.get(i);
+            if (i == index) {
+                tab.setIsChecked(true);
+            } else {
+                tab.setIsChecked(false);
             }
         }
     }
