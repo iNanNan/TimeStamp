@@ -5,9 +5,10 @@
     tools:context="com.mobilephonesensor.MainActivityFragment">
 
     <TextView
+        android:id="@+id/frag_main_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
-        android:text="Hello World!" />
+        android:text="点击跳转到MVP测试界面" />
 
 </RelativeLayout>
