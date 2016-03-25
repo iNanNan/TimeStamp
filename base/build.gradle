@@ -9,6 +9,13 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode rootProject.ext.versionCode
         versionName rootProject.ext.versionName
+
+        ndk {
+            moduleName "genius_blur"
+            cFlags "-DANDROID_NDK -D_RELEASE"
+            ldLibs "m", "log", "jnigraphics"
+            abiFilters "armeabi"
+        }
     }
 
     buildTypes {
@@ -36,8 +43,8 @@ dependencies {
 
     compile rootProject.ext.libGson
     compile rootProject.ext.libRxJava
-    compile rootProject.ext.libEventBus
     compile rootProject.ext.libDagger
     compile rootProject.ext.libDaggerCompiler
+    compile rootProject.ext.libNineoldandroids
     compile rootProject.ext.libOkHttpLoggingInterceptor
 }

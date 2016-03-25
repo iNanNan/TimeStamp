@@ -65,6 +65,7 @@ public abstract class BaseThread<P, R>{
             @Override
             public void call(Throwable throwable) {
                 onException(throwable);
+                throwable.printStackTrace();
             }
         }, new Action0() {
             @Override
