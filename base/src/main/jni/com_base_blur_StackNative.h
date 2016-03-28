@@ -2,8 +2,8 @@
 #include <jni.h>
 /* Header for class net_qiujuer_genius_blur_StackNative */
 
-#ifndef _Included_net_qiujuer_genius_blur_StackNative
-#define _Included_net_qiujuer_genius_blur_StackNative
+#ifndef _Included_com_base_blur_StackNative
+#define _Included_com_base_blur_StackNative
 #ifdef __cplusplus
 extern "C" {
 #endif
