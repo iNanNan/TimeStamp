@@ -56,7 +56,9 @@ public abstract class BaseThread<P, R>{
 
     public void execute() {
         onPrepare();
-        doTask().subscribe(new Action1<R>() {
+        doTask().subscribeOn(mScheduler)
+                .observeOn(AndroidSchedulers.ui())
+                .subscribe(new Action1<R>() {
             @Override
             public void call(R result) {
                 onSuccess(result);
