@@ -2,8 +2,7 @@ package com.mobilephonesensor.test;
 
 import android.util.Log;
 
-import com.base.thread.AndroidSchedulers;
-import com.base.thread.BaseThread;
+import com.base.thread.BaseTask;
 import com.mobilephonesensor.R;
 
 import rx.Observable;
@@ -12,12 +11,11 @@ import rx.functions.Func1;
 /**
  * Created by heng on 16-3-24.
  */
-public class TestThread extends BaseThread<String, Integer> {
+public class TestThread extends BaseTask<String, Integer> {
 
     @Override
     protected Observable doTask() {
         return Observable.just("test")
-                .subscribeOn(mScheduler)
                 .map(new Func1<String, Integer>() {
                     @Override
                     public Integer call(String params) {
@@ -39,8 +37,7 @@ public class TestThread extends BaseThread<String, Integer> {
                          }
                      }
 
-                )
-                .observeOn(AndroidSchedulers.ui());
+                );
     }
 
     @Override

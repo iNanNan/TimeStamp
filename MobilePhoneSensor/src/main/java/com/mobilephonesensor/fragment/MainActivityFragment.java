@@ -4,8 +4,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.view.View;
+import android.widget.TextView;
 
-import com.base.presenter.Presenter;
 import com.mobilephonesensor.R;
 import com.mobilephonesensor.base.SupperFragment;
 import com.mobilephonesensor.test.TestActivity;
@@ -15,6 +15,8 @@ import com.mobilephonesensor.test.TestActivity;
  */
 public class MainActivityFragment extends SupperFragment {
 
+    TextView test;
+
     @Override
     protected int getContentResId() {
         return R.layout.fragment_main;
@@ -23,7 +25,7 @@ public class MainActivityFragment extends SupperFragment {
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        View test = find(R.id.frag_main_text);
+        test = find(R.id.frag_main_text);
         test.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

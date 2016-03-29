@@ -1,6 +1,7 @@
 package com.mobilephonesensor.test;
 
-import android.graphics.Bitmap;
+import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageSwitcher;
 import android.widget.ImageView;
@@ -8,8 +9,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ViewSwitcher;
 
+import com.base.message.BaseEvent;
+import com.base.message.RxBus;
+import com.base.message.SubscriberHandMethod;
 import com.base.presenter.Presenter;
 import com.base.presenter.PresenterFactory;
+import com.base.thread.BaseTask;
 import com.mobilephonesensor.R;
 import com.mobilephonesensor.base.SupperActivity;
 
@@ -40,6 +45,7 @@ public class TestActivity extends SupperActivity implements TestPresenterView {
             ((TestPresenterFactory.TestPresenter) p).setDataToView();
         }
     }
+
 
     @Override
     public void showTestText(String showText) {
@@ -73,7 +79,7 @@ public class TestActivity extends SupperActivity implements TestPresenterView {
             }
         });
 
-        TestThread testThread = new TestThread(){
+        new TestThread(){
 
             @Override
             protected void onSuccess(Integer result) {
@@ -81,7 +87,31 @@ public class TestActivity extends SupperActivity implements TestPresenterView {
                 imageView.setImageResource(result);
                 Toast.makeText(getApplicationContext(), "testThread", Toast.LENGTH_LONG).show();
             }
-        };
-        testThread.execute();
+        }.execute();
+
+
+    }
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        RxBus.getInstance().register(this);
+        String to = this.getClass().getName();
+        Bundle bundle = new Bundle();
+        bundle.putLong("cur_tid", Thread.currentThread().getId());
+        RxBus.getInstance().sendEvent(new BaseEvent().setTo(to).setData(bundle).setScheduler(BaseTask.SchedulerType.NEW));
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        RxBus.getInstance().unregister(this);
+    }
+
+    @SubscriberHandMethod
+    public void executeEvent(BaseEvent evt) {
+        long evtLong = evt.getData().getLong("cur_tid");
+        Log.e("executeEvent", evtLong + "-" +Thread.currentThread().getId());
     }
 }
