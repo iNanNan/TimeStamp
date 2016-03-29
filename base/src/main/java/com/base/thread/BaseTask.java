@@ -10,7 +10,7 @@ import rx.schedulers.Schedulers;
 /**
  * Created by heng on 16-3-21.
  */
-public abstract class BaseThread<P, R>{
+public abstract class BaseTask<P, R>{
 
     private P mParams;
 
@@ -24,11 +24,11 @@ public abstract class BaseThread<P, R>{
         this.mParams = mParams;
     }
 
-    public BaseThread() {
-        this.mScheduler = SchedulerType.getScheduler(SchedulerType.NEW);
+    public BaseTask() {
+        this(SchedulerType.NEW);
     }
 
-    public BaseThread(SchedulerType schedulerType) {
+    public BaseTask(SchedulerType schedulerType) {
         this.mScheduler = SchedulerType.getScheduler(schedulerType);
     }
 
@@ -92,7 +92,9 @@ public abstract class BaseThread<P, R>{
         /** Creates and returns a Scheduler that queues work on the current thread to be executed after the current work completes. */
         TRAMPOLINE,
         /** Creates and returns a TestScheduler, which is useful for debugging. */
-        TEST;
+        TEST,
+        /** Creates and returns a android ui scheduler */
+        UI;
 
         public static Scheduler getScheduler(SchedulerType schedulerType) {
 
@@ -117,8 +119,11 @@ public abstract class BaseThread<P, R>{
                 case TEST:
                     scheduler = Schedulers.test();
                     break;
+                case UI:
+                    scheduler = AndroidSchedulers.ui();
+                    break;
                 default:
-                    scheduler = Schedulers.newThread();
+                    scheduler = Schedulers.immediate();
                     break;
             }
 
