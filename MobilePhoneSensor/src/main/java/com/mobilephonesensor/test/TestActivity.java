@@ -9,6 +9,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ViewSwitcher;
 
+import com.base.inject.InjectView;
 import com.base.message.BaseEvent;
 import com.base.message.RxBus;
 import com.base.message.SubscriberHandMethod;
@@ -23,6 +24,15 @@ import com.mobilephonesensor.base.SupperActivity;
  * Created by heng on 16-3-21.
  */
 public class TestActivity extends SupperActivity implements TestPresenterView {
+
+    @InjectView(R.id.act_test_text)
+    private TextView textView;
+
+    @InjectView(R.id.act_test_image)
+    private ImageView imageView;
+
+    @InjectView(R.id.act_test_switcher)
+    private ImageSwitcher switcher;
 
     private int[] images = {R.mipmap.themebg_d_2, R.mipmap.themebg_dn_2};
 
@@ -49,12 +59,8 @@ public class TestActivity extends SupperActivity implements TestPresenterView {
 
     @Override
     public void showTestText(String showText) {
-
-        ((TextView) find(R.id.act_test_text)).setText(showText);
-
-        final ImageView imageView = find(R.id.act_text_image);
-
-        final ImageSwitcher switcher = find(R.id.act_test_switcher);
+        Log.e("showTestText", showText);
+        textView.setText(showText);
         switcher.setFactory(new ViewSwitcher.ViewFactory() {
             @Override
             public View makeView() {
@@ -96,6 +102,7 @@ public class TestActivity extends SupperActivity implements TestPresenterView {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.e("onCreate","textViewId"+textView+"switcherId"+switcher);
         RxBus.getInstance().register(this);
         String to = this.getClass().getName();
         Bundle bundle = new Bundle();
@@ -109,6 +116,7 @@ public class TestActivity extends SupperActivity implements TestPresenterView {
         RxBus.getInstance().unregister(this);
     }
 
+    @SuppressWarnings("unused")
     @SubscriberHandMethod
     public void executeEvent(BaseEvent evt) {
         long evtLong = evt.getData().getLong("cur_tid");

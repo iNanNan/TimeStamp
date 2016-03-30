@@ -17,6 +17,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.base.inject.InjectView;
 import com.base.presenter.Presenter;
 import com.base.util.ScreenUtil;
 import com.mobilephonesensor.R;
@@ -30,12 +31,16 @@ import java.util.List;
 
 public class MainActivity extends SupperActivity {
 
+    @InjectView(R.id.act_main_toolbar)
     private Toolbar mToolbar;
 
+    @InjectView(R.id.act_main_view_page)
     private ViewPager mViewPager;
 
+    @InjectView(R.id.act_main_drawer)
     private DrawerLayout mDrawerLayout;
 
+    @InjectView(R.id.act_main_indicator)
     private ViewPagerIndicator mPageIndicator;
 
     @Override
@@ -48,15 +53,8 @@ public class MainActivity extends SupperActivity {
 
     }
 
-    protected void bindView() {
-        mViewPager = find(R.id.act_main_view_page);
-        mDrawerLayout = find(R.id.act_main_drawer);
-        mPageIndicator = find(R.id.act_main_indicator);
-    }
-
     @Override
     protected Toolbar onCreateToolbar() {
-        mToolbar = find(R.id.act_main_toolbar);
         mToolbar.setNavigationIcon(R.mipmap.ic_menu_emoticons);
         return mToolbar;
     }
@@ -64,7 +62,6 @@ public class MainActivity extends SupperActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        bindView();
         getSupportActionBar().setHomeButtonEnabled(true);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         initToggle();

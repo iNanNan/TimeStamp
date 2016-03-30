@@ -6,6 +6,7 @@ import android.support.annotation.Nullable;
 import android.view.View;
 import android.widget.TextView;
 
+import com.base.inject.InjectView;
 import com.mobilephonesensor.R;
 import com.mobilephonesensor.base.SupperFragment;
 import com.mobilephonesensor.test.TestActivity;
@@ -15,6 +16,7 @@ import com.mobilephonesensor.test.TestActivity;
  */
 public class MainActivityFragment extends SupperFragment {
 
+    @InjectView(R.id.frag_main_text)
     TextView test;
 
     @Override
@@ -25,7 +27,6 @@ public class MainActivityFragment extends SupperFragment {
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        test = find(R.id.frag_main_text);
         test.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
