@@ -10,6 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.base.inject.BindWidget;
 import com.base.presenter.Presenter;
 import com.base.presenter.PresenterFactory;
 import com.base.presenter.PresenterLoader;
@@ -38,6 +39,7 @@ public abstract class BaseActivity extends  AppCompatActivity implements Present
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(getContentResId());
+        BindWidget.init(this);
         if (onCreateToolbar() != null) {
             setSupportActionBar(onCreateToolbar());
         }

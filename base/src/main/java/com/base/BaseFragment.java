@@ -9,6 +9,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.base.inject.BindWidget;
 import com.base.presenter.Presenter;
 import com.base.presenter.PresenterFactory;
 import com.base.presenter.PresenterLoader;
@@ -44,16 +45,18 @@ public abstract class BaseFragment extends Fragment implements PresenterView, Lo
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        mPresenterFactory = obtainPresenterFactory();
-        if (mPresenterFactory != null) {
-            getActivity().getSupportLoaderManager().initLoader(FRAG_LOADER_ID, null, this);
-        }
         super.onActivityCreated(savedInstanceState);
+
     }
 
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        BindWidget.init(this);
+        mPresenterFactory = obtainPresenterFactory();
+        if (mPresenterFactory != null) {
+            getActivity().getSupportLoaderManager().initLoader(FRAG_LOADER_ID, null, this);
+        }
     }
 
     @Override
