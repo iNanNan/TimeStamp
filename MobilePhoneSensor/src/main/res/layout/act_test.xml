@@ -1,11 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
     android:layout_height="match_parent">
 
     <TextView
         android:id="@+id/act_test_text"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="@dimen/app_general_15dp"
+        android:paddingBottom="@dimen/app_general_15dp"
         android:gravity="center"/>
+
+    <ImageView
+        android:id="@+id/act_test_image"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/app_general_60dp"
+        android:background="@android:color/black"/>
+
+    <ImageSwitcher
+        android:id="@+id/act_test_switcher"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:inAnimation="@anim/alpha_in"
+        android:outAnimation="@anim/alpha_out"/>
 </LinearLayout>

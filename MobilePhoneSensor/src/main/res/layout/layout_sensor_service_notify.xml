@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/app_general_60dp">
+
+    <ImageView
+        android:layout_width="@dimen/app_general_60dp"
+        android:layout_height="match_parent"
+        android:src="@mipmap/ic_menu_emoticons"/>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:paddingLeft="@dimen/app_general_10dp"
+        android:paddingRight="@dimen/app_general_10dp">
+
+        <TextView
+            android:id="@+id/sensor_notify_title"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/app_general_30dp"
+            android:singleLine="true"
+            android:ellipsize="marquee"
+            android:gravity="center_vertical"
+            android:textSize="@dimen/app_general_18dp"/>
+
+        <TextView
+            android:id="@+id/sensor_notify_desc"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/app_general_30dp"
+            android:singleLine="true"
+            android:ellipsize="marquee"
+            android:gravity="center_vertical" />
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/sensor_notify_close"
+        android:layout_width="@dimen/app_general_60dp"
+        android:layout_height="match_parent"
+        android:padding="@dimen/app_general_15dp"
+        android:src="@android:drawable/ic_menu_close_clear_cancel"/>
+
+</LinearLayout>
