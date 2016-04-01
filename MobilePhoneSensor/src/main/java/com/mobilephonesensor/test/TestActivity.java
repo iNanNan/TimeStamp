@@ -10,7 +10,7 @@ import android.widget.Toast;
 import android.widget.ViewSwitcher;
 
 import com.base.inject.InjectView;
-import com.base.message.BaseEvent;
+import com.base.message.Event;
 import com.base.message.RxBus;
 import com.base.message.SubscriberHandMethod;
 import com.base.presenter.Presenter;
@@ -102,12 +102,10 @@ public class TestActivity extends SupperActivity implements TestPresenterView {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.e("onCreate","textViewId"+textView+"switcherId"+switcher);
         RxBus.getInstance().register(this);
-        String to = this.getClass().getName();
         Bundle bundle = new Bundle();
         bundle.putLong("cur_tid", Thread.currentThread().getId());
-        RxBus.getInstance().sendEvent(new BaseEvent().setTo(to).setData(bundle).setScheduler(BaseTask.SchedulerType.NEW));
+        RxBus.getInstance().sendEvent(new Event().setTo(this.getClass().getName()).setData(bundle).setScheduler(BaseTask.SchedulerType.NEW));
     }
 
     @Override
@@ -118,8 +116,8 @@ public class TestActivity extends SupperActivity implements TestPresenterView {
 
     @SuppressWarnings("unused")
     @SubscriberHandMethod
-    public void executeEvent(BaseEvent evt) {
+    public void executeEvent(Event evt) {
         long evtLong = evt.getData().getLong("cur_tid");
-        Log.e("executeEvent", evtLong + "-" +Thread.currentThread().getId());
+        Log.e("TestActivity", evtLong + "-" +Thread.currentThread().getId());
     }
 }

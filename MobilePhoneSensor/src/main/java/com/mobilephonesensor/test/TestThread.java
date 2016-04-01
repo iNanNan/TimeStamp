@@ -1,7 +1,10 @@
 package com.mobilephonesensor.test;
 
+import android.os.Bundle;
 import android.util.Log;
 
+import com.base.message.Event;
+import com.base.message.RxBus;
 import com.base.thread.BaseTask;
 import com.mobilephonesensor.R;
 
@@ -33,6 +36,9 @@ public class TestThread extends BaseTask<String, Integer> {
 
                              }
                              Log.e("doTask", "map2=" + (System.currentTimeMillis() - c));
+                             Bundle bundle = new Bundle();
+                             bundle.putLong("cur_tid", Thread.currentThread().getId());
+                             RxBus.getInstance().sendEvent(new Event().setTo(Event.ANY).setData(bundle).setScheduler(BaseTask.SchedulerType.NEW));
                              return R.mipmap.ic_menu_emoticons;
                          }
                      }
