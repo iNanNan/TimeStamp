@@ -59,20 +59,23 @@ public class RxBus {
     }
 
     public void unregister(Object subscriber) {
-        if (subscriber != null) {
-            String key = subscriber.getClass().getName();
-            if (subscriberMap.containsKey(key)) {
-                subscriberMap.remove(key);
-                if (allSubscriberWorks.containsKey(key)) {
-                    Scheduler.Worker worker = allSubscriberWorks.get(key);
-                    if (worker != null && !worker.isUnsubscribed()) {
-                        worker.unsubscribe();
-                    }
-                    allSubscriberWorks.remove(key, worker);
+        if (subscriber == null) {
+            throw new IllegalStateException(subscriber.toString() + "is null.");
+        }
+
+        String key = subscriber.getClass().getName();
+
+        if (subscriberMap.containsKey(key)) {
+            subscriberMap.remove(key);
+            if (allSubscriberWorks.containsKey(key)) {
+                Scheduler.Worker worker = allSubscriberWorks.get(key);
+                if (worker != null && !worker.isUnsubscribed()) {
+                    worker.unsubscribe();
                 }
-            } else {
-                throw new IllegalStateException(subscriber.toString() + "not register by RxBus.");
+                allSubscriberWorks.remove(key, worker);
             }
+        } else {
+            throw new IllegalStateException(subscriber.toString() + "not register by RxBus.");
         }
     }
 
