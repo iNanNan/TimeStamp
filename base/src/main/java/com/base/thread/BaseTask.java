@@ -3,6 +3,7 @@ package com.base.thread;
 
 import rx.Observable;
 import rx.Scheduler;
+import rx.Subscription;
 import rx.functions.Action0;
 import rx.functions.Action1;
 import rx.schedulers.Schedulers;
@@ -11,6 +12,8 @@ import rx.schedulers.Schedulers;
  * Created by heng on 16-3-21.
  */
 public abstract class BaseTask<P, R>{
+
+    private Subscription mSubscription;
 
     private P mParams;
 
@@ -48,6 +51,9 @@ public abstract class BaseTask<P, R>{
     }
 
     protected void onDestroy() {
+        if (mSubscription != null) {
+            mSubscription.unsubscribe();
+        }
     }
 
     public void destroy() {
@@ -56,7 +62,8 @@ public abstract class BaseTask<P, R>{
 
     public void execute() {
         onPrepare();
-        doTask().subscribeOn(mScheduler)
+        mSubscription  = doTask()
+                .subscribeOn(mScheduler)
                 .observeOn(AndroidSchedulers.ui())
                 .subscribe(new Action1<R>() {
             @Override
