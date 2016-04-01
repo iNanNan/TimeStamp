@@ -3,6 +3,8 @@ package com.base.message;
 import com.base.thread.BaseTask;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -16,7 +18,7 @@ import rx.functions.Action0;
  */
 public class RxBus {
 
-    private static ConcurrentHashMap<Object, Scheduler.Worker> allSubscriberWorks = null;
+    private static ConcurrentHashMap<Object, List<Scheduler.Worker>> allSubscriberWorks = null;
 
     private static ConcurrentHashMap<Object, Object> subscriberMap = null;
 
@@ -68,11 +70,14 @@ public class RxBus {
         if (subscriberMap.containsKey(key)) {
             subscriberMap.remove(key);
             if (allSubscriberWorks.containsKey(key)) {
-                Scheduler.Worker worker = allSubscriberWorks.get(key);
-                if (worker != null && !worker.isUnsubscribed()) {
-                    worker.unsubscribe();
+                List<Scheduler.Worker> workers = allSubscriberWorks.get(key);
+                for (Scheduler.Worker worker : workers) {
+                    if (worker != null && !worker.isUnsubscribed()) {
+                        worker.unsubscribe();
+                    }
                 }
-                allSubscriberWorks.remove(key, worker);
+                workers.clear();
+                allSubscriberWorks.remove(key, workers);
             }
         } else {
             throw new IllegalStateException(subscriber.toString() + "not register by RxBus.");
@@ -122,14 +127,31 @@ public class RxBus {
         } else if (period > 0 && delayTime >= 0 && timeUnit != null) {
             worker.schedulePeriodically(eventAction, delayTime, period, timeUnit);
         } else {
-            scheduler.createWorker().schedule(eventAction);
+            worker.schedule(eventAction);
         }
 
-        allSubscriberWorks.put(to, worker);
+        allSubscriberWorks.put(to, getSubscribeWorkList(to, worker));
     }
 
     public void setEmptyEvent(int what) {
         this.sendEvent(new Event(what));
+    }
+
+    private List<Scheduler.Worker> getSubscribeWorkList(Object subscriberKey, Scheduler.Worker worker) {
+
+        List<Scheduler.Worker> workerList = null;
+
+        if (allSubscriberWorks.containsKey(subscriberKey)) {
+            workerList = allSubscriberWorks.get(subscriberKey);
+        }
+
+        if (workerList == null) {
+            workerList = new ArrayList<>();
+        }
+
+        workerList.add(worker);
+
+        return workerList;
     }
 
     private static class EventAction implements Action0 {
