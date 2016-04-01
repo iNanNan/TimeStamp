@@ -7,7 +7,13 @@ import com.base.thread.BaseTask;
 /**
  * Created by heng on 16-3-28.
  */
-public class BaseEvent<FROM, TO> {
+public final class Event<FROM, TO> {
+
+    public final static String ANY = "-any-";
+
+    public int what = -1;
+
+    public Object obj = null;
 
     private FROM from;
 
@@ -17,17 +23,26 @@ public class BaseEvent<FROM, TO> {
 
     private BaseTask.SchedulerType scheduler;
 
-    public BaseEvent setFrom(FROM from) {
+    public Event(){}
+
+    /** 创建空消息，发送给所有，并且指定在ui线程 */
+    public Event(int what) {
+        this.to = (TO) ANY;
+        this.what = what;
+        this.scheduler = BaseTask.SchedulerType.UI;
+    }
+
+    public Event setFrom(FROM from) {
         this.from = from;
         return this;
     }
 
-    public BaseEvent setTo(TO to) {
+    public Event setTo(TO to) {
         this.to = to;
         return this;
     }
 
-    public BaseEvent setData(Bundle data) {
+    public Event setData(Bundle data) {
         this.data = data;
         return this;
     }
@@ -44,12 +59,16 @@ public class BaseEvent<FROM, TO> {
         return data;
     }
 
-    public BaseEvent setScheduler(BaseTask.SchedulerType scheduler) {
+    public Event setScheduler(BaseTask.SchedulerType scheduler) {
         this.scheduler = scheduler;
         return this;
     }
 
     public BaseTask.SchedulerType getScheduler() {
         return scheduler;
+    }
+
+    public Event setToAny() {
+        return setTo((TO) ANY);
     }
 }
