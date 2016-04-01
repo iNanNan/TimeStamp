@@ -24,7 +24,7 @@ public class RxBus {
 
     private static ConcurrentLinkedQueue<Event> untreatedEvents = null;
 
-    private static RxBus instance = null;
+    private static volatile RxBus instance = null;
 
     public static RxBus getInstance() {
         if (instance == null) {
