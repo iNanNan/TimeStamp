@@ -19,6 +19,8 @@ import com.base.thread.BaseTask;
 import com.mobilephonesensor.R;
 import com.mobilephonesensor.base.SupperActivity;
 
+import java.util.concurrent.TimeUnit;
+
 
 /**
  * Created by heng on 16-3-21.
@@ -105,7 +107,7 @@ public class TestActivity extends SupperActivity implements TestPresenterView {
         RxBus.getInstance().register(this);
         Bundle bundle = new Bundle();
         bundle.putLong("cur_tid", Thread.currentThread().getId());
-        RxBus.getInstance().sendEvent(new Event().setTo(this.getClass().getName()).setData(bundle).setScheduler(BaseTask.SchedulerType.NEW));
+        RxBus.getInstance().sendEvent(new Event().setTo(this.getClass().getName()).setData(bundle).setScheduler(BaseTask.SchedulerType.UI), 0, 2, TimeUnit.SECONDS);
     }
 
     @Override
