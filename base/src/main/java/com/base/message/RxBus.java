@@ -3,8 +3,6 @@ package com.base.message;
 import com.base.thread.BaseTask;
 
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -17,8 +15,6 @@ import rx.functions.Action0;
  * Created by heng on 16-3-28.
  */
 public class RxBus {
-
-    private static ConcurrentHashMap<Object, List<Scheduler.Worker>> allSubscriberWorks = null;
 
     private static ConcurrentHashMap<Object, Object> subscriberMap = null;
 
@@ -40,7 +36,6 @@ public class RxBus {
     private RxBus() {
         subscriberMap = new ConcurrentHashMap<>();
         untreatedEvents = new ConcurrentLinkedQueue<>();
-        allSubscriberWorks = new ConcurrentHashMap<>();
     }
 
     public void register(Object subscriber) {
@@ -69,16 +64,6 @@ public class RxBus {
 
         if (subscriberMap.containsKey(key)) {
             subscriberMap.remove(key);
-            if (allSubscriberWorks.containsKey(key)) {
-                List<Scheduler.Worker> workers = allSubscriberWorks.get(key);
-                for (Scheduler.Worker worker : workers) {
-                    if (worker != null && !worker.isUnsubscribed()) {
-                        worker.unsubscribe();
-                    }
-                }
-                workers.clear();
-                allSubscriberWorks.remove(key, workers);
-            }
         } else {
             throw new IllegalStateException(subscriber.toString() + "not register by RxBus.");
         }
@@ -118,8 +103,9 @@ public class RxBus {
         untreatedEvents.offer(event);
 
         Scheduler scheduler = BaseTask.SchedulerType.getScheduler(event.getScheduler());
-        EventAction eventAction = new EventAction(event);
         Scheduler.Worker worker = scheduler.createWorker();
+        EventAction eventAction = new EventAction(event,worker);
+
         if (period == 0 && delayTime == 0 && timeUnit == null) {
             worker.schedule(eventAction);
         } else if (period == 0 && delayTime > 0 && timeUnit != null) {
@@ -130,28 +116,11 @@ public class RxBus {
             worker.schedule(eventAction);
         }
 
-        allSubscriberWorks.put(to, getSubscribeWorkList(to, worker));
     }
 
-    public void setEmptyEvent(int what) {
-        this.sendEvent(new Event(what));
-    }
-
-    private List<Scheduler.Worker> getSubscribeWorkList(Object subscriberKey, Scheduler.Worker worker) {
-
-        List<Scheduler.Worker> workerList = null;
-
-        if (allSubscriberWorks.containsKey(subscriberKey)) {
-            workerList = allSubscriberWorks.get(subscriberKey);
-        }
-
-        if (workerList == null) {
-            workerList = new ArrayList<>();
-        }
-
-        workerList.add(worker);
-
-        return workerList;
+    public void setEmptyEvent(String to, int what) {
+        Event event = new Event(to, what);
+        this.sendEvent(event);
     }
 
     private static class EventAction implements Action0 {
@@ -159,10 +128,11 @@ public class RxBus {
         private final ConcurrentLinkedQueue<Object> subscribers;
 
         private Event event;
-
-        public EventAction(Event event) {
+        Scheduler.Worker worker;
+        public EventAction(Event event,Scheduler.Worker worker) {
             this.subscribers = new ConcurrentLinkedQueue<>();
             this.event = event;
+            this.worker = worker;
             if (Event.ANY.equals(event.getTo())) {
                 for (Map.Entry<Object, Object> m : subscriberMap.entrySet()) {
                     this.subscribers.offer(m.getValue());
@@ -170,6 +140,7 @@ public class RxBus {
             } else {
                 this.subscribers.offer(RxBus.getInstance().getSubscriber(event.getTo()));
             }
+
         }
 
         @Override
@@ -178,17 +149,17 @@ public class RxBus {
                 return;
             }
 
-            for (Object subscriber : subscribers) {
+            try {
+                for (Object subscriber : subscribers) {
 
-                if (subscriber == null) {
-                    continue;
-                }
+                    if (subscriber == null) {
+                        continue;
+                    }
 
-                try {
                     Method[] methods = subscriber.getClass().getDeclaredMethods();
 
                     for (Method m : methods) {
-                        SubscriberHandMethod shm = m.getAnnotation(SubscriberHandMethod.class);
+                        Subscriber shm = m.getAnnotation(Subscriber.class);
                         if (shm != null) {
                             Class<?>[] cArray =  m.getParameterTypes();
                             if (cArray != null
@@ -196,6 +167,11 @@ public class RxBus {
                                     && cArray[0] == Event.class) {
                                 m.setAccessible(true);
                                 m.invoke(subscriber, event);
+
+                                if (!worker.isUnsubscribed()) {
+                                    worker.unsubscribe();
+                                }
+
                                 if (untreatedEvents.contains(event)) {
                                     untreatedEvents.remove(event);
                                 }
@@ -203,9 +179,9 @@ public class RxBus {
                         }
                     }
 
-                } catch (Exception e){
-                    e.printStackTrace();
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
 
         }
