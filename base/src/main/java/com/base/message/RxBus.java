@@ -1,7 +1,5 @@
 package com.base.message;
 
-import com.base.thread.BaseTask;
-
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -102,7 +100,7 @@ public class RxBus {
 
         untreatedEvents.offer(event);
 
-        Scheduler scheduler = BaseTask.SchedulerType.getScheduler(event.getScheduler());
+        Scheduler scheduler = event.getScheduler().get();
         Scheduler.Worker worker = scheduler.createWorker();
         EventAction eventAction = new EventAction(event,worker);
 

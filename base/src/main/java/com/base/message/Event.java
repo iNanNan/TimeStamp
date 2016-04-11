@@ -4,7 +4,7 @@ import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import com.base.thread.BaseTask;
+import com.base.thread.SchedulerType;
 
 /**
  * Created by heng on 16-3-28.
@@ -23,7 +23,7 @@ public final class Event implements Parcelable {
 
     private Bundle data;
 
-    private BaseTask.SchedulerType scheduler;
+    private SchedulerType scheduler;
 
     public Event(){}
 
@@ -31,7 +31,7 @@ public final class Event implements Parcelable {
     public Event(int what) {
         this.to = ANY;
         this.what = what;
-        this.scheduler = BaseTask.SchedulerType.UI;
+        this.scheduler = SchedulerType.UI;
     }
 
     public Event(String to, int what) {
@@ -66,12 +66,12 @@ public final class Event implements Parcelable {
         return data;
     }
 
-    public Event setScheduler(BaseTask.SchedulerType scheduler) {
+    public Event setScheduler(SchedulerType scheduler) {
         this.scheduler = scheduler;
         return this;
     }
 
-    public BaseTask.SchedulerType getScheduler() {
+    public SchedulerType getScheduler() {
         return scheduler;
     }
 

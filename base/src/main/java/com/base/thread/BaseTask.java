@@ -1,12 +1,10 @@
 package com.base.thread;
 
-
 import rx.Observable;
 import rx.Scheduler;
 import rx.Subscription;
 import rx.functions.Action0;
 import rx.functions.Action1;
-import rx.schedulers.Schedulers;
 
 /**
  * Created by heng on 16-3-21.
@@ -32,7 +30,7 @@ public abstract class BaseTask<P, R>{
     }
 
     public BaseTask(SchedulerType schedulerType) {
-        this.mScheduler = SchedulerType.getScheduler(schedulerType);
+        this.mScheduler = schedulerType.get();
     }
 
     /** 添加Observable操作符如：map,filter */
@@ -84,57 +82,4 @@ public abstract class BaseTask<P, R>{
         });
     }
 
-    public enum SchedulerType {
-        /**
-         * {@link Schedulers}
-         * Creates and returns a Scheduler intended for computational work.
-         */
-        COMPUTATION,
-        /** Creates and returns a Scheduler that executes work immediately on the current thread. */
-        IMMEDIATE,
-        /** Creates and returns a Scheduler intended for IO-bound work. */
-        IO,
-        /** Creates and returns a Scheduler that creates a new Thread for each unit of work. */
-        NEW,
-        /** Creates and returns a Scheduler that queues work on the current thread to be executed after the current work completes. */
-        TRAMPOLINE,
-        /** Creates and returns a TestScheduler, which is useful for debugging. */
-        TEST,
-        /** Creates and returns a android ui scheduler */
-        UI;
-
-        public static Scheduler getScheduler(SchedulerType schedulerType) {
-
-            Scheduler scheduler;
-
-            switch (schedulerType) {
-                case COMPUTATION:
-                    scheduler = Schedulers.computation();
-                    break;
-                case IMMEDIATE:
-                    scheduler = Schedulers.immediate();
-                    break;
-                case IO:
-                    scheduler = Schedulers.io();
-                    break;
-                case NEW:
-                    scheduler = Schedulers.newThread();
-                    break;
-                case TRAMPOLINE:
-                    scheduler = Schedulers.trampoline();
-                    break;
-                case TEST:
-                    scheduler = Schedulers.test();
-                    break;
-                case UI:
-                    scheduler = AndroidSchedulers.ui();
-                    break;
-                default:
-                    scheduler = Schedulers.immediate();
-                    break;
-            }
-
-            return scheduler;
-        }
-    }
 }
