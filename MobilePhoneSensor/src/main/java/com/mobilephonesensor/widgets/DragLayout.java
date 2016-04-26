@@ -387,14 +387,15 @@ public class DragLayout extends ViewGroup {
     }
 
     private void startScrollAnim(int critical, int velocity) {
-        endDrag();
         final int startX = (int) mOffsetPixels;
         if (mDragging && Math.abs(velocity) > 1000) {
+            endDrag();
             final int dx = critical - startX;
             final float rate = velocity / 1000;
             final int duration = (int) (dx / rate);
             mScroller.startScroll(startX, 0, dx, 0, duration);
         } else {
+            endDrag();
             int dx;
             int duration;
             if (mMenuState == MenuState.OPEN
