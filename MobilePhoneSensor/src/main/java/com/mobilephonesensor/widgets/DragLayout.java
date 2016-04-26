@@ -387,24 +387,28 @@ public class DragLayout extends ViewGroup {
     }
 
     private void startScrollAnim(int critical, int velocity) {
-        int duration = 500;
+        endDrag();
         final int startX = (int) mOffsetPixels;
         if (mDragging && Math.abs(velocity) > 1000) {
-            endDrag();
             final int dx = critical - startX;
+            final float rate = velocity / 1000;
+            final int duration = (int) (dx / rate);
             mScroller.startScroll(startX, 0, dx, 0, duration);
         } else {
-            endDrag();
             int dx;
+            int duration;
             if (mMenuState == MenuState.OPEN
                     && mLastTouchX > mMenuWidth) {
                 dx = -mMenuWidth;
+                duration = 350;
             } else {
                 if (startX > mMenuWidth / 2) {
                     dx = mMenuWidth - startX;
                 } else {
                     dx = -startX;
                 }
+                final float rate = mMenuWidth / 350;
+                duration = (int) (dx / rate);
             }
             mScroller.startScroll(startX, 0, dx, 0, duration);
         }
@@ -418,7 +422,6 @@ public class DragLayout extends ViewGroup {
     private void endDrag() {
         mDragging = false;
         if (mVelocityTracker != null) {
-            mVelocityTracker.clear();
             mVelocityTracker.recycle();
             mVelocityTracker = null;
         }
