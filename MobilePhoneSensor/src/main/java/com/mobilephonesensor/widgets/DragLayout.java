@@ -408,7 +408,7 @@ public class DragLayout extends ViewGroup {
                     dx = -startX;
                 }
                 final float rate = mMenuWidth / 350;
-                duration = (int) (dx / rate);
+                duration = (int) (Math.abs(dx) / rate);
             }
             mScroller.startScroll(startX, 0, dx, 0, duration);
         }
