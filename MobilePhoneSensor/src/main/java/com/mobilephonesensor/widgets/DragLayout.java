@@ -2,8 +2,10 @@ package com.mobilephonesensor.widgets;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.res.TypedArray;
+import android.graphics.Canvas;
+import android.graphics.drawable.GradientDrawable;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
@@ -18,6 +20,10 @@ import com.mobilephonesensor.R;
  * Created by heng on 16-4-19.
  */
 public class DragLayout extends ViewGroup {
+
+    private final static int DEFAULT_SHADOW_WIDTH = 6;
+
+    private final static int DEFAULT_SHADOW_COLOR = 0xFF848484;
 
     private final static int A_NEGATIVE = -1;
 
@@ -59,6 +65,8 @@ public class DragLayout extends ViewGroup {
 
     private boolean mDragging = false;
 
+    private boolean mShadow = false;
+
     private View mMenuView;
 
     private View mContentView;
@@ -75,11 +83,17 @@ public class DragLayout extends ViewGroup {
 
     private int mMenuWidth;
 
+    private int mShadowWidth = 0;
+
+    private int mShadowColor = 0;
+
     private int mActivePointerId = A_NEGATIVE;
 
     private Scroller mScroller;
 
     private VelocityTracker mVelocityTracker;
+
+    private GradientDrawable mShadowDrawable;
 
     public MenuState getMenuState() {
         return mMenuState;
@@ -87,6 +101,18 @@ public class DragLayout extends ViewGroup {
 
     public View getMenuView() {
         return mMenuView;
+    }
+
+    public void setShadow(boolean mShadow) {
+        this.mShadow = mShadow;
+    }
+
+    public int getShadowWidth() {
+        return mShadowWidth;
+    }
+
+    public void setShadowWidth(int mShadowWidth) {
+        this.mShadowWidth = mShadowWidth;
     }
 
     public void setMenuView(View menuView) {
@@ -115,6 +141,13 @@ public class DragLayout extends ViewGroup {
 
     public DragLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.DragLayout);
+        mShadow = ta.getBoolean(R.styleable.DragLayout_shadow, false);
+        if (mShadow) {
+            mShadowColor = ta.getColor(R.styleable.DragLayout_shadowColor, DEFAULT_SHADOW_COLOR);
+            mShadowWidth = ta.getDimensionPixelOffset(R.styleable.DragLayout_shadowWidth, DEFAULT_SHADOW_WIDTH);
+        }
+        ta.recycle();
         mScroller = new Scroller(context, new LinearInterpolator());
         final ViewConfiguration configuration = ViewConfiguration.get(context);
         mSlop = configuration.getScaledTouchSlop();
@@ -291,6 +324,7 @@ public class DragLayout extends ViewGroup {
                     mLastTouchY = y;
                     transMenuAndContent(dx + mOffsetPixels);
                 }
+                invalidate();
                 break;
             case MotionEvent.ACTION_CANCEL:
             case MotionEvent.ACTION_UP:
@@ -326,6 +360,12 @@ public class DragLayout extends ViewGroup {
         }
     }
 
+    @Override
+    protected void dispatchDraw(Canvas canvas) {
+        super.dispatchDraw(canvas);
+        drawDragShadowDrawable(canvas);
+    }
+
     private void upPointer(MotionEvent event) {
         final int pointerIndex = event.getActionIndex();
         final int pointerId = event.getPointerId(event.getActionIndex());
@@ -342,11 +382,21 @@ public class DragLayout extends ViewGroup {
     }
 
     private void openMenu() {
-        mDragging = false;
+        if (mMenuState == MenuState.CLOSE) {
+            scrollByMenuState(mMenuState);
+        }
     }
 
     private void closeMenu() {
-        mDragging = false;
+        if (mMenuState == MenuState.OPEN) {
+            scrollByMenuState(mMenuState);
+        }
+    }
+
+    private void scrollByMenuState(MenuState state) {
+        final int startX = (int) mOffsetPixels;
+        final int dx = state == MenuState.CLOSE ? mMenuWidth : -mMenuWidth;
+        mScroller.startScroll(startX, 0, dx, 0, 350);
     }
 
     private void transMenuAndContent(float offset) {
@@ -368,11 +418,17 @@ public class DragLayout extends ViewGroup {
 
         if (mOffsetPixels == mMenuWidth) {
             mMenuState = MenuState.OPEN;
+            setMenuViewEnabled();
         } else if (mOffsetPixels == 0) {
             mMenuState = MenuState.CLOSE;
+            setMenuViewEnabled();
         } else {
             mMenuState = MenuState.SLIDING;
         }
+    }
+
+    private void setMenuViewEnabled() {
+        mMenuView.setEnabled(mMenuState == MenuState.OPEN ? true : false);
     }
 
     private void addMovementToVelocityTracker(MotionEvent ev) {
@@ -426,6 +482,29 @@ public class DragLayout extends ViewGroup {
             mVelocityTracker.recycle();
             mVelocityTracker = null;
         }
+    }
+
+    private void drawDragShadowDrawable(Canvas canvas) {
+        if (mShadow && mOffsetPixels > 0) {
+            if (mShadowDrawable == null) {
+                createShadowDrawable();
+            }
+            final int right = (int) (mContentView.getLeft() + mContentView.getTranslationX()) + 1;
+            final int left = right - mShadowWidth;
+            final int bottom = getHeight();
+            mShadowDrawable.setBounds(left, 0, right, bottom);
+            mShadowDrawable.draw(canvas);
+        }
+    }
+
+    private void createShadowDrawable() {
+        if (mShadowWidth == 0) {
+            mShadowWidth = DEFAULT_SHADOW_WIDTH;
+        }
+        if (mShadowColor == 0) {
+            mShadowColor = DEFAULT_SHADOW_COLOR;
+        }
+        mShadowDrawable = new GradientDrawable(GradientDrawable.Orientation.RIGHT_LEFT, new int[]{mShadowColor, 0x00FFFFFF});
     }
 
     private boolean checkChildScroll(View checkView, int x, int y, int dx, int dy) {
