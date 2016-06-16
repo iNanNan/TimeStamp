@@ -4,4 +4,5 @@
     <string name="drawer_open">open</string>
     <string name="drawer_close">close</string>
     <string name="sensor_notify_default_msg">正在为亲保护眼睛...</string>
+    <string name="read_rex">Read: \"%1$s\"</string>
 </resources>

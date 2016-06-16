@@ -11,4 +11,26 @@
         <attr name="setIndicatorPaddingBottom" format="dimension"/>
         <attr name="tabLayout" format="reference"/>
     </declare-styleable>
+    <!-- DragLayout -->
+    <declare-styleable name="DragLayout">
+        <attr name="shadow" format="boolean"/>
+        <attr name="shadowColor" format="color"/>
+        <attr name="shadowWidth" format="dimension"/>
+    </declare-styleable>
+    <!-- ShadowImageView -->
+    <declare-styleable name="ShadowImageView">
+        <attr name="siv_cornerRadius" format="dimension"/>
+        <!-- 左上角圆角半径 -->
+        <attr name="siv_cornerTLRadius" format="dimension"/>
+        <!-- 右上角圆角半径 -->
+        <attr name="siv_cornerTRRadius" format="dimension"/>
+        <!-- 左下角圆角半径 -->
+        <attr name="siv_cornerBLRadius" format="dimension"/>
+        <!-- 右上角圆角半径 -->
+        <attr name="siv_cornerBRRadius" format="dimension"/>
+        <attr name="siv_shadowWidth" format="dimension"/>
+        <attr name="siv_shadowStartColor" format="color"/>
+        <attr name="siv_shadowEndColor" format="color"/>
+        <attr name="siv_isOval" format="boolean"/>
+    </declare-styleable>
 </resources>

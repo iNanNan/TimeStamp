@@ -6,6 +6,9 @@
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <uses-permission android:name="android.permission.REBOOT"/>
 
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -26,6 +29,13 @@
             android:label="Test MVP"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:screenOrientation="portrait">
+        </activity>
+        <activity android:name=".test.Test2Activity"
+            android:label="Test Menu"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme.NoActionBar">
+
         </activity>
         <service android:name=".service.SensorService">
         </service>

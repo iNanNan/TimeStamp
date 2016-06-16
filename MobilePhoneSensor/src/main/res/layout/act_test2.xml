@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.mobilephonesensor.widgets.DragLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/dragLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <FrameLayout
+        android:id="@id/dragMenu"
+        android:layout_width="270dp"
+        android:layout_height="match_parent">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="menu layout, hi bo bo" />
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@id/dragContent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/darker_gray">
+
+        <android.support.v4.view.ViewPager
+            android:id="@+id/test2_view_page"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+    </FrameLayout>
+</com.mobilephonesensor.widgets.DragLayout>
