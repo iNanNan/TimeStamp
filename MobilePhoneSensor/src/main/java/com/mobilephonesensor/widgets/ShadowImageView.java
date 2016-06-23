@@ -1,15 +1,29 @@
 package com.mobilephonesensor.widgets;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.content.res.TypedArray;
+import android.graphics.Bitmap;
+import android.graphics.BitmapShader;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.ColorFilter;
+import android.graphics.DashPathEffect;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.PixelFormat;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.RadialGradient;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.graphics.Shader;
+import android.graphics.Xfermode;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
+import android.net.Uri;
 import android.util.AttributeSet;
 import android.widget.ImageView;
 
@@ -20,33 +34,129 @@ import com.mobilephonesensor.R;
  */
 public class ShadowImageView extends ImageView {
 
+    public enum Shape {
+        RECT(0),
+
+        OVAL(1),
+
+        CIRCLE(2);
+
+        final int value;
+
+        Shape(int value) {
+            this.value = value;
+        }
+
+        public int getValue() {
+            return value;
+        }
+    }
+
     private static final int DEFAULT_SHADOW_START_COLOR = 0x4D000000;
 
     private static final int DEFAULT_SHADOW_END_COLOR = 0x00FFFFFF;
 
-    private boolean isOval;
+    /**
+     * View的形状
+     *
+     * @see Shape
+     */
+    private final int SHAPE;
 
+    /* 圆角半径 */
     private int mCornerRadius;
-
+    /* 左上角半径 */
     private int mCornerTLRadius;
-
+    /* 右上角半径 */
     private int mCornerTRRadius;
-
+    /* 左下角半径 */
     private int mCornerBLRadius;
-
+    /* 右下角半径 */
     private int mCornerBRRadius;
 
+    /* 边框宽度 */
+    private int mBorderWidth;
+    /* 边框颜色 */
+    private int mBorderColor;
+    /* 阴影宽度 */
     private int mShadowWidth;
-
+    /* 阴影开始颜色 */
     private int mShadowStartColor;
-
+    /* 阴影结束颜色 */
     private int mShadowEndColor;
-
-    private Path mRadiusPath;
-
+    /* 绘制阴影的路径 */
     private Path mShadowPath;
 
     private Paint mPaint;
+    /* 最后显示在控件上的资源 */
+    private Drawable mDrawable;
+    /* 显示的类型 */
+    private ScaleType mScaleType = ScaleType.MATRIX;
+
+    private int mRes = 0;
+
+    public int getCornerRadius() {
+        return mCornerRadius;
+    }
+
+    public void setCornerRadius(int mCornerRadius) {
+        this.mCornerRadius = mCornerRadius;
+        invalidate();
+    }
+
+    public int getCornerTLRadius() {
+        return mCornerTLRadius;
+    }
+
+    public void setCornerTLRadius(int mCornerTLRadius) {
+        this.mCornerTLRadius = mCornerTLRadius;
+        invalidate();
+    }
+
+    public int getCornerTRRadius() {
+        return mCornerTRRadius;
+    }
+
+    public void setCornerTRRadius(int mCornerTRRadius) {
+        this.mCornerTRRadius = mCornerTRRadius;
+        invalidate();
+    }
+
+    public int getCornerBLRadius() {
+        return mCornerBLRadius;
+    }
+
+    public void setCornerBLRadius(int mCornerBLRadius) {
+        this.mCornerBLRadius = mCornerBLRadius;
+        invalidate();
+    }
+
+    public int getCornerBRRadius() {
+        return mCornerBRRadius;
+    }
+
+    public void setCornerBRRadius(int mCornerBRRadius) {
+        this.mCornerBRRadius = mCornerBRRadius;
+        invalidate();
+    }
+
+    public int getBorderWidth() {
+        return mBorderWidth;
+    }
+
+    public void setBorderWidth(int mBorderWidth) {
+        this.mBorderWidth = mBorderWidth;
+        invalidate();
+    }
+
+    public int getBorderColor() {
+        return mBorderColor;
+    }
+
+    public void setBorderColor(int mBorderColor) {
+        this.mBorderColor = mBorderColor;
+        invalidate();
+    }
 
     public int getShadowWidth() {
         return mShadowWidth;
@@ -54,6 +164,7 @@ public class ShadowImageView extends ImageView {
 
     public void setShadowWidth(int mShadowWidth) {
         this.mShadowWidth = mShadowWidth;
+        invalidate();
     }
 
     public int getShadowStartColor() {
@@ -62,6 +173,7 @@ public class ShadowImageView extends ImageView {
 
     public void setShadowStartColor(int mShadowStartColor) {
         this.mShadowStartColor = mShadowStartColor;
+        invalidate();
     }
 
     public int getShadowEndColor() {
@@ -71,6 +183,7 @@ public class ShadowImageView extends ImageView {
     public void setShadowEndColor(int mShadowEndColor) {
         this.mShadowEndColor = mShadowEndColor;
     }
+
     public ShadowImageView(Context context) {
         this(context, null);
     }
@@ -82,6 +195,7 @@ public class ShadowImageView extends ImageView {
     public ShadowImageView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.ShadowImageView);
+        SHAPE = ta.getInt(R.styleable.ShadowImageView_siv_shape, Shape.RECT.value);
 
         mCornerRadius = ta.getDimensionPixelOffset(R.styleable.ShadowImageView_siv_cornerRadius, 0);
         mCornerTLRadius = ta.getDimensionPixelOffset(R.styleable.ShadowImageView_siv_cornerTLRadius, mCornerRadius);
@@ -89,127 +203,111 @@ public class ShadowImageView extends ImageView {
         mCornerBLRadius = ta.getDimensionPixelOffset(R.styleable.ShadowImageView_siv_cornerBLRadius, mCornerRadius);
         mCornerBRRadius = ta.getDimensionPixelOffset(R.styleable.ShadowImageView_siv_cornerBRRadius, mCornerRadius);
 
+        mBorderWidth = ta.getDimensionPixelOffset(R.styleable.ShadowImageView_siv_borderWidth, 0);
+        mBorderColor = ta.getColor(R.styleable.ShadowImageView_siv_borderColor, DEFAULT_SHADOW_END_COLOR);
+
         mShadowWidth = ta.getDimensionPixelOffset(R.styleable.ShadowImageView_siv_shadowWidth, 0);
         mShadowStartColor = ta.getColor(R.styleable.ShadowImageView_siv_shadowStartColor, DEFAULT_SHADOW_START_COLOR);
         mShadowEndColor = ta.getColor(R.styleable.ShadowImageView_siv_shadowEndColor, DEFAULT_SHADOW_END_COLOR);
         ta.recycle();
 
-        mRadiusPath = new Path();
         mShadowPath = new Path();
         mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        updateCornerDrawable();
+    }
 
+    @Override
+    public void setScaleType(ScaleType scaleType) {
+        super.setScaleType(scaleType);
+        if (scaleType != null && mScaleType != scaleType) {
+            updateCornerDrawable();
+        }
+    }
+
+    @Override
+    public void setImageURI(Uri uri) {
+        super.setImageURI(uri);
+        setImageDrawable(getDrawable());
+    }
+
+    @Override
+    public void setImageBitmap(Bitmap bm) {
+        setImageDrawable(CornerDrawable.obtainCornerDrawable(bm, getResources()));
+    }
+
+    @Override
+    public void setImageResource(int resId) {
+        setImageDrawable(resolveResource(resId));
+    }
+
+    /**
+     * 为了处理圆角，所有设置的图片资源最终都统一
+     * 在这里处理成CornerDrawable
+     *
+     * @param drawable
+     */
+    @Override
+    public void setImageDrawable(Drawable drawable) {
+        if (drawable == null) {
+            return;
+        }
+        if (drawable instanceof CornerDrawable) {
+            mDrawable = drawable;
+        } else {
+            mDrawable = CornerDrawable.obtainCornerDrawable(drawable2Bitmap(drawable), getResources());
+        }
+        super.setImageDrawable(mDrawable);
+        updateCornerDrawable();
+    }
+
+    @Override
+    protected void drawableStateChanged() {
+        super.drawableStateChanged();
+        invalidate();
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
-        resetDrawableSizeAndLocation();
-        super.onDraw(canvas);
-        final Rect bounds = getDrawable().getBounds();
-        setMaxRadius();
-        drawRadius(canvas, bounds);
+        /* 这里并没有调用super.onDraw方法所以此控件对
+         * 是无效的android:cropToPadding
+         * */
+
+        if (mDrawable == null) {
+            return;
+        }
+        final CornerDrawable d = (CornerDrawable) mDrawable;
+        //设置padding(由于没有重写super.onDraw所以padding需要单独处理)
+        d.setPadding(getPaddingLeft() + mShadowWidth
+                , getPaddingTop() + mShadowWidth
+                , getPaddingRight() + mShadowWidth
+                , getPaddingBottom() + mShadowWidth);
+        mDrawable.draw(canvas);
+        final Rect bounds = d.getRealBounds();
         drawShadow(canvas, bounds);
     }
 
-    private void resetDrawableSizeAndLocation() {
-        if (mShadowWidth <= 0) {
+    private void updateCornerDrawable() {
+        if (mDrawable == null) {
             return;
         }
-        final Rect tempRect = getDrawable().copyBounds();
-        getDrawable().getBounds().set(
-                tempRect.left + mShadowWidth,
-                tempRect.top + mShadowWidth,
-                tempRect.right - mShadowWidth,
-                tempRect.bottom - mShadowWidth);
+        this.mScaleType = getScaleType();
+        ((CornerDrawable) mDrawable)
+                .updateValues(mCornerTLRadius
+                        , mCornerTRRadius
+                        , mCornerBRRadius
+                        , mCornerBLRadius
+                        , mBorderWidth
+                        , mBorderColor
+                        , mScaleType
+                        , SHAPE);
     }
 
-    private void drawRadius(Canvas canvas, Rect rect) {
-
-        final int top = rect.top;
-        final int left = rect.left;
-        final int right = rect.right;
-        final int bottom = rect.bottom;
-
-        mPaint.setColor(Color.WHITE);
-
-        if (mCornerTLRadius > 0) {
-            mRadiusPath.reset();
-            mRadiusPath.moveTo(left, top);
-            mRadiusPath.lineTo(left + mCornerTLRadius, top);
-            mRadiusPath.quadTo(left, top, left, top + mCornerTLRadius);
-            mRadiusPath.lineTo(left, top + mCornerTLRadius);
-            mRadiusPath.lineTo(left, top);
-            mRadiusPath.close();
-            canvas.save();
-            canvas.drawPath(mRadiusPath, mPaint);
-            canvas.restore();
-        }
-
-        if (mCornerTRRadius > 0) {
-            mRadiusPath.reset();
-            mRadiusPath.moveTo(right, top);
-            mRadiusPath.lineTo(right, top + mCornerTRRadius);
-            mRadiusPath.quadTo(right, top, right - mCornerTRRadius, top);
-            mRadiusPath.lineTo(right - mCornerTRRadius, top);
-            mRadiusPath.lineTo(right, top);
-            mRadiusPath.close();
-            canvas.save();
-            canvas.drawPath(mRadiusPath, mPaint);
-            canvas.restore();
-        }
-
-        if (mCornerBLRadius > 0) {
-            mRadiusPath.reset();
-            mRadiusPath.moveTo(left, bottom);
-            mRadiusPath.lineTo(left, bottom - mCornerBLRadius);
-            mRadiusPath.quadTo(left, bottom, left + mCornerBLRadius, bottom);
-            mRadiusPath.lineTo(left + mCornerBLRadius, bottom);
-            mRadiusPath.lineTo(left, bottom);
-            mRadiusPath.close();
-            canvas.save();
-            canvas.drawPath(mRadiusPath, mPaint);
-            canvas.restore();
-        }
-
-        if (mCornerBRRadius > 0) {
-            mRadiusPath.reset();
-            mRadiusPath.moveTo(right, bottom);
-            mRadiusPath.lineTo(right, bottom - mCornerBRRadius);
-            mRadiusPath.quadTo(right, bottom, right - mCornerBRRadius, bottom);
-            mRadiusPath.lineTo(right - mCornerBRRadius, bottom);
-            mRadiusPath.lineTo(right, bottom);
-            mRadiusPath.close();
-            canvas.save();
-            canvas.drawPath(mRadiusPath, mPaint);
-            canvas.restore();
-        }
-
-    }
-
-    private void setMaxRadius() {
-        final int max = getMaxRadii();
-        if (mCornerTLRadius > max) {
-            mCornerTLRadius = max;
-        }
-
-        if (mCornerTRRadius > max) {
-            mCornerTRRadius = max;
-        }
-
-        if (mCornerBLRadius > max) {
-            mCornerBLRadius = max;
-        }
-
-        if (mCornerBRRadius > max) {
-            mCornerBRRadius = max;
-        }
-    }
-
-    private final int getMaxRadii() {
-        final int r = getWidth() / 2;
-        final int r2 = getHeight() / 2;
-        return r < r2 ? r : r2;
-    }
-
+    /**
+     * 开始绘制阴影
+     *
+     * @param canvas
+     * @param rect
+     */
     private void drawShadow(Canvas canvas, Rect rect) {
 
         if (mShadowWidth <= 0) {
@@ -220,10 +318,18 @@ public class ShadowImageView extends ImageView {
         final int left = rect.left;
         final int right = rect.right;
         final int bottom = rect.bottom;
+        mPaint.setStyle(Paint.Style.FILL);
         drawTopShadow(top, left, right, canvas);
         drawLeftShadow(top, left, bottom, canvas);
         drawRightShadow(top, right, bottom, canvas);
         drawBottomShadow(left, right, bottom, canvas);
+
+        mPaint.setStyle(Paint.Style.STROKE);
+        mPaint.setStrokeWidth(mShadowWidth);
+        drawTLShadow(canvas, top, left);
+        drawTRShadow(canvas, top, right);
+        drawBRShadow(canvas, right, bottom);
+        drawBLShadow(canvas, left, bottom);
     }
 
     private void drawTopShadow(int top, int left, int right, Canvas canvas) {
@@ -258,6 +364,16 @@ public class ShadowImageView extends ImageView {
         drawLinearShadow(showTop, showLeft, showRight, showBottom, GradientDrawable.Orientation.TOP_BOTTOM, canvas);
     }
 
+    /**
+     * 主要绘制线性阴影
+     *
+     * @param top         阴影起点Y坐标
+     * @param left        起点X坐标
+     * @param right       终点X坐标
+     * @param bottom      终点Y坐标
+     * @param orientation 阴影的渐变方向 (参考 @see android.graphics.drawable.GradientDrawable.Orientation)
+     * @param canvas
+     */
     private void drawLinearShadow(int top, int left, int right, int bottom, GradientDrawable.Orientation orientation, Canvas canvas) {
 
         if ((left == right) || (top == bottom)) {
@@ -301,34 +417,494 @@ public class ShadowImageView extends ImageView {
         mShadowPath.close();
         canvas.save();
         mPaint.setShader(gradient);
-        canvas.translate(getPaddingLeft(), getPaddingTop());
         canvas.drawPath(mShadowPath, mPaint);
         canvas.restore();
         mPaint.setShader(null);
     }
 
-    private void drawTLShadow() {
+    private void drawTLShadow(Canvas canvas, int top, int left) {
         if (mCornerTLRadius <= 0) {
             return;
         }
+        final float diameter = (mCornerTLRadius + mShadowWidth / 2) * 2;
+        final float oLeft = left - mShadowWidth / 2;
+        final float oTop = top - mShadowWidth / 2;
+        final float oRight = diameter + oLeft;
+        final float oBottom = diameter + top;
+        RectF oval = new RectF(oLeft, oTop, oRight, oBottom);
+        drawArcShadow(canvas, oval, 0);
     }
 
-    private void drawTRShadow() {
+    private void drawTRShadow(Canvas canvas, int top, int right) {
         if (mCornerTRRadius <= 0) {
             return;
         }
+        final float diameter = (mCornerTRRadius + mShadowWidth / 2) * 2;
+        final float oTop = top - mShadowWidth / 2;
+        final float oRight = right + mShadowWidth / 2;
+        final float oBottom = diameter + oTop;
+        final float oLeft = oRight - diameter;
+        RectF oval = new RectF(oLeft, oTop, oRight, oBottom);
+        drawArcShadow(canvas, oval, 1);
     }
 
-    private void drawBLShadow() {
-        if (mCornerBLRadius <= 0) {
-            return;
-        }
-    }
-
-    private void drawBRShadow() {
+    private void drawBRShadow(Canvas canvas, int right, int bottom) {
         if (mCornerBRRadius <= 0) {
             return;
         }
+        final float diameter = (mCornerBRRadius + mShadowWidth / 2) * 2;
+        final float oRight = right + mShadowWidth / 2;
+        final float oBottom = bottom + mShadowWidth / 2;
+        final float oLeft = oRight - diameter;
+        final float oTop = oBottom - diameter;
+        RectF oval = new RectF(oLeft, oTop, oRight, oBottom);
+        drawArcShadow(canvas, oval, 2);
     }
 
+    private void drawBLShadow(Canvas canvas, int left, int bottom) {
+        if (mCornerBLRadius <= 0) {
+            return;
+        }
+        final float diameter = (mCornerBLRadius + mShadowWidth / 2) * 2;
+        final float oLeft = left - mShadowWidth / 2;
+        final float oBottom = bottom + mShadowWidth / 2;
+        final float oTop = oBottom - diameter;
+        final float oRight = oLeft + diameter;
+        RectF oval = new RectF(oLeft, oTop, oRight, oBottom);
+        drawArcShadow(canvas, oval, 3);
+    }
+
+    private void drawArcShadow(Canvas canvas, RectF oval, int orientation) {
+        final float radii = (oval.right - oval.left) / 2;
+        final float centerX = oval.left + radii;
+        final float centerY = oval.top + radii;
+        float start = 0;
+        final float sweep = 90;
+        switch (orientation) {
+            case 0://左上
+                start = 180;
+                break;
+            case 1://右上
+                start = 270;
+                break;
+            case 2://右下
+                start = 0;
+                break;
+            case 3://左下
+                start = 90;
+                break;
+        }
+        float shaderRadii = radii + mShadowWidth / 2;
+        RadialGradient gradient = new RadialGradient(centerX
+                , centerY
+                , shaderRadii
+                , mShadowStartColor
+                , mShadowEndColor
+                , Shader.TileMode.CLAMP);
+        canvas.save();
+        mPaint.setShader(gradient);
+        canvas.drawArc(oval, start, sweep, false, mPaint);
+        canvas.restore();
+        mPaint.setShader(null);
+    }
+
+    private Bitmap drawable2Bitmap(Drawable drawable) {
+        if (drawable == null) {
+            return null;
+        }
+
+        if (drawable instanceof BitmapDrawable) {
+            return ((BitmapDrawable) drawable).getBitmap();
+        }
+
+        Bitmap bitmap;
+        int width = Math.max(drawable.getIntrinsicWidth(), 2);
+        int height = Math.max(drawable.getIntrinsicHeight(), 2);
+        try {
+            bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(bitmap);
+            drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+            drawable.draw(canvas);
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+            bitmap = null;
+        }
+        return bitmap;
+    }
+
+    private Drawable resolveResource(int resId) {
+        if (mRes != resId) {
+            mRes = resId;
+        }
+
+        if (mRes == 0) {
+            return null;
+        }
+
+        Drawable d = null;
+
+        try {
+            Drawable temp = getResources().getDrawable(mRes);
+            d = CornerDrawable.obtainCornerDrawable(drawable2Bitmap(temp), getResources());
+        } catch (Resources.NotFoundException e) {
+            //
+        }
+        return d;
+    }
+
+    /**
+     * 自定义Drawable实现圆角及边框的处理
+     */
+    static class CornerDrawable extends Drawable {
+
+        private float[] mRadiusRadii = new float[]{0, 0, 0, 0, 0, 0, 0, 0};
+
+        private float[] mBorderRadii = new float[]{0, 0, 0, 0, 0, 0, 0, 0};
+
+        private int mShape;
+
+        private ScaleType mScaleType = null;
+
+        /* 绘制图片的边界 */
+        private final RectF mFillBounds = new RectF();
+        /* 绘制边框的边界 */
+        private final RectF mBorderBounds = new RectF();
+
+        private Path mPath;
+
+        private Paint mFillPaint;
+
+        private Paint mBorderPaint;
+
+        private Bitmap mBitmap;
+
+        private BitmapShader mShader;
+
+        private int mBitmapWidth;
+
+        private int mBitmapHeight;
+
+        private int mPaddingTop = 0;
+
+        private int mPaddingLeft = 0;
+
+        private int mPaddingRight = 0;
+
+        private int mPaddingBottom = 0;
+
+        private int mBorderWidth = 0;
+
+        private int mBorderColor = 0;
+
+        public static Drawable obtainCornerDrawable(Bitmap bitmap, Resources r) {
+            if (bitmap == null)
+                return null;
+            else
+                return new CornerDrawable(bitmap, r);
+        }
+
+        public void updateValues(int rTL, int rTR, int rBR, int rBL, int borderWidth, int borderColor, ScaleType scaleType, int shape) {
+            mShape = shape;
+            mScaleType = scaleType;
+            mRadiusRadii[0] = mRadiusRadii[1] = rTL;
+            mRadiusRadii[2] = mRadiusRadii[3] = rTR;
+            mRadiusRadii[4] = mRadiusRadii[5] = rBR;
+            mRadiusRadii[6] = mRadiusRadii[7] = rBL;
+            if (borderWidth > 0) {
+                mBorderWidth = borderWidth;
+                mBorderColor = borderColor;
+                for (int i = 0; i < 8; i++) {
+                    mBorderRadii[i] = mRadiusRadii[i];
+                    mRadiusRadii[i] = mBorderRadii[i] - mBorderWidth;
+                }
+                setBorderInternal(mBorderWidth, mBorderColor, 0, 0, false);
+            }
+            invalidateSelf();
+        }
+
+        public void setBorder(int width, int color, float dashWidth, float dashGap) {
+            setBorderInternal(width, color, dashWidth, dashGap, true);
+        }
+
+        public void setPadding(int left, int top, int right, int bottom) {
+            this.mPaddingLeft = left;
+            this.mPaddingTop = top;
+            this.mPaddingRight = right;
+            this.mPaddingBottom = bottom;
+        }
+
+        public CornerDrawable(Bitmap bitmap, Resources r) {
+            if (bitmap == null) {
+                mBitmapWidth = mBitmapHeight = -1;
+                return;
+            }
+            this.mBitmap = bitmap;
+            if (r != null) {
+                mBitmapWidth = bitmap.getScaledWidth(r.getDisplayMetrics());
+                mBitmapHeight = bitmap.getScaledHeight(r.getDisplayMetrics());
+            } else {
+                mBitmapWidth = bitmap.getWidth();
+                mBitmapHeight = bitmap.getHeight();
+            }
+            this.mPath = new Path();
+            this.mFillPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            this.mFillPaint.setStyle(Paint.Style.FILL);
+        }
+
+        @Override
+        public void draw(Canvas canvas) {
+            if (mBitmapWidth == -1 || mBitmapHeight == -1) {
+                return;
+            }
+            configureImageBounds(canvas);
+            canvas.save();
+
+            final boolean isBorder = mBorderPaint != null && mBorderPaint.getAlpha() > 0 && mBorderPaint.getStrokeWidth() > 0;
+
+            mPath.reset();
+            if (isBorder) {
+                adjustFillBounds();
+            }
+            switch (mShape) {
+                case 1://oval
+                    canvas.drawOval(mFillBounds, mFillPaint);
+                    if (isBorder) {
+                        canvas.drawOval(mFillBounds, mBorderPaint);
+                    }
+                    break;
+                case 2://circle
+                    break;
+                default://rect
+                    mPath.addRoundRect(mFillBounds, mRadiusRadii, Path.Direction.CW);
+                    canvas.drawPath(mPath, mFillPaint);
+                    if (isBorder) {
+                        mPath.reset();
+                        mPath.addRoundRect(mFillBounds, mBorderRadii, Path.Direction.CW);
+                        canvas.drawPath(mPath, mBorderPaint);
+                    }
+            }
+            mPath.close();
+            canvas.restore();
+        }
+
+        @Override
+        public void setAlpha(int alpha) {
+            mFillPaint.setAlpha(alpha);
+            invalidateSelf();
+        }
+
+        @Override
+        public void setColorFilter(ColorFilter colorFilter) {
+            mFillPaint.setColorFilter(colorFilter);
+            invalidateSelf();
+        }
+
+        @Override
+        public void setFilterBitmap(boolean filter) {
+            mFillPaint.setFilterBitmap(filter);
+            invalidateSelf();
+        }
+
+        @Override
+        public int getIntrinsicWidth() {
+            final int superSize = super.getIntrinsicWidth();
+            if (superSize <= 0) {
+                return mBitmapWidth;
+            }
+            return superSize;
+        }
+
+        @Override
+        public int getIntrinsicHeight() {
+            final int superSize = super.getIntrinsicHeight();
+            if (superSize <= 0) {
+                return mBitmapHeight;
+            }
+            return superSize;
+        }
+
+        @Override
+        public int getOpacity() {
+            return mFillPaint.getAlpha() > 0 ? PixelFormat.TRANSLUCENT : PixelFormat.OPAQUE;
+        }
+
+        public Rect getRealBounds() {
+            if (mBorderWidth <= 0)
+                return new Rect((int) mFillBounds.left, (int)mFillBounds.top, (int) mFillBounds.right, (int) mFillBounds.bottom);
+            else
+                return new Rect((int) mBorderBounds.left, (int)mBorderBounds.top, (int) mBorderBounds.right, (int) mBorderBounds.bottom);
+        }
+
+        /**
+         * 这里对部分朋友可能不好理解！噢噢~~
+         * 想知道为什么去参考ImageView的ScaleType配置
+         * 详情在ImageView源码configureBounds的方法中
+         *
+         * @param canvas 这里不同于ImageView的地方在于小于控件的图片都
+         *               进行了放大，扩大到视图的边界，不然圆角没有任何意义
+         * @see android.widget.ImageView.ScaleType
+         */
+        private void configureImageBounds(Canvas canvas) {
+            final Rect canvasBounds = canvas.getClipBounds();
+            final int cTop = canvasBounds.top;
+            final int cLeft = canvasBounds.left;
+            final int cRight = canvasBounds.right;
+            final int cBottom = canvasBounds.bottom;
+            final int canvasW = cRight - cLeft;
+            final int canvasH = cBottom - cTop;
+            mFillBounds.set(cLeft + mPaddingLeft + mBorderWidth
+                    , cTop + mPaddingTop + mBorderWidth
+                    , cRight - mPaddingRight - mBorderWidth
+                    , cBottom - mPaddingBottom - mBorderWidth);
+            boolean fits = (mBitmapWidth < 0 || canvasW == mBitmapWidth) &&
+                    (mBitmapHeight < 0 || canvasH == mBitmapHeight);
+            boolean crop = mBitmapWidth > canvasW && mBitmapHeight > canvasH;
+            Bitmap temp = null;
+            if (fits) {//原图和ImageView一样大不需要做任何处理
+                temp = mBitmap;
+            } else if (ScaleType.MATRIX == mScaleType ||
+                    ScaleType.FIT_START == mScaleType) {
+                    /* 从ImageView的左上角开始绘制原图，
+                    原图超过ImageView的部分作裁剪处理，
+                    如果原图小于ImageView等比例放大 */
+                if (!crop) {
+                    float scale;
+                    if (mBitmapWidth * canvasH > mBitmapHeight * canvasW) {//高比较接近画布边缘
+                        scale = (float) canvasH / (float) mBitmapHeight;
+                    } else {
+                        scale = (float) canvasW / (float) mBitmapWidth;
+                    }
+                    temp = scaleBitmap((int) (scale * mBitmapWidth), (int) (scale * mBitmapHeight));
+                }
+            } else if (ScaleType.CENTER == mScaleType ||
+                    ScaleType.FIT_CENTER == mScaleType ||
+                    ScaleType.CENTER_CROP == mScaleType) {
+                    /* 将原图中心对准ImageView的中心，
+                    超出部分作裁剪处理，如果原图小于ImageView
+                    等比例放大原图 */
+                if (crop) {
+                    temp = cropBitmap(canvasW, canvasH, 1);
+                } else {
+                    float scale;
+                    if (mBitmapWidth * canvasH > mBitmapHeight * canvasW) {//高比较接近画布边缘
+                        scale = (float) canvasH / (float) mBitmapHeight;
+                    } else {
+                        scale = (float) canvasW / (float) mBitmapWidth;
+                    }
+                    final int scaleW = (int) (scale * mBitmapWidth);
+                    final int scaleH = (int) (scale * mBitmapHeight);
+                    if (mBitmapWidth * canvasH == mBitmapHeight * canvasW) {
+                        temp = scaleBitmap(scaleW, scaleH);
+                    } else {
+                        temp = cropBitmap(scaleBitmap(scaleW, scaleH), canvasW, canvasH, 1);
+                    }
+                }
+            } else if (ScaleType.CENTER_INSIDE == mScaleType ||
+                    ScaleType.FIT_XY == mScaleType) {
+                    /* 通过拉伸或缩小完全显示原图到ImageView上 */
+                temp = scaleBitmap(canvasW, canvasH);
+            } else if (ScaleType.FIT_END == mScaleType) {
+                    /* 从ImageView的右下角开始绘制原图，
+                    原图超过ImageView的部分作裁剪处理，
+                    如果原图小于ImageView等比例放大 */
+                if (crop) {
+                    temp = cropBitmap(canvasW, canvasH, 2);
+                } else {
+                    float scale;
+                    if (mBitmapWidth * canvasH > mBitmapHeight * canvasW) {//高比较接近画布边缘
+                        scale = (float) canvasH / (float) mBitmapHeight;
+                    } else {
+                        scale = (float) canvasW / (float) mBitmapWidth;
+                    }
+                    final int scaleW = (int) (scale * mBitmapWidth);
+                    final int scaleH = (int) (scale * mBitmapHeight);
+                    if (mBitmapWidth * canvasH == mBitmapHeight * canvasW) {
+                        temp = scaleBitmap(scaleW, scaleH);
+                    } else {
+                        temp = cropBitmap(scaleBitmap(scaleW, scaleH), canvasW, canvasH, 2);
+                    }
+                }
+            } else {
+                //unknown
+                temp = mBitmap;
+            }
+            mShader = new BitmapShader(temp, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
+            mFillPaint.setShader(mShader);
+        }
+
+        private void adjustFillBounds() {
+
+        }
+
+        private void setBorderInternal(int width, int color, float dashWidth, float dashGap, boolean invalidate) {
+            if (mBorderPaint == null) {
+                mBorderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+                mBorderPaint.setStyle(Paint.Style.STROKE);
+            }
+            mBorderPaint.setStrokeWidth(width);
+            mBorderPaint.setColor(color);
+
+            DashPathEffect e = null;
+            if (dashWidth > 0) {
+                e = new DashPathEffect(new float[]{dashWidth, dashGap}, 0);
+            }
+            mBorderPaint.setPathEffect(e);
+            if (invalidate) {
+                invalidateSelf();
+            }
+        }
+
+        /**
+         * 裁剪位图
+         *
+         * @param src
+         * @param newWidth
+         * @param newHeight
+         * @param type      三种模式：0裁剪右下角新图取左上角，1为裁剪边缘新图取中间，2裁剪左下角新图取右上角
+         * @return
+         */
+        private Bitmap cropBitmap(Bitmap src, int newWidth, int newHeight, int type) {
+            if (src == null) {
+                return null;
+            }
+            final int srcW = src.getWidth();
+            final int srcH = src.getHeight();
+            int sx;
+            int sy;
+            switch (type) {
+                case 1:
+                    sx = (srcW - newWidth) / 2;
+                    sy = (srcH - newHeight) / 2;
+                    break;
+                case 2:
+                    sx = srcW - newWidth;
+                    sy = srcH - newHeight;
+                    break;
+                default:
+                    sx = 0;
+                    sy = 0;
+            }
+            Bitmap result;
+            result = Bitmap.createBitmap(src, sx, sy, newWidth, newHeight);
+            return result;
+        }
+
+        private Bitmap cropBitmap(int newWidth, int newHeight, int type) {
+            return this.cropBitmap(mBitmap, newWidth, newHeight, type);
+        }
+
+        /**
+         * 缩放位图
+         *
+         * @param newWidth
+         * @param newHeight
+         * @return
+         */
+        private Bitmap scaleBitmap(int newWidth, int newHeight) {
+            if (mBitmap == null) {
+                return null;
+            }
+            return Bitmap.createScaledBitmap(mBitmap, newWidth, newHeight, false);
+        }
+    }
 }
