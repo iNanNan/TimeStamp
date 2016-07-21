@@ -196,7 +196,7 @@ public class ShadowImageView extends ImageView {
     }
 
     public ShadowImageView(Context context) {
-        super(context);
+        this(context, null);
     }
 
     public ShadowImageView(Context context, AttributeSet attrs) {
@@ -293,8 +293,7 @@ public class ShadowImageView extends ImageView {
                 getPaddingRight() + mShadowWidth,
                 getPaddingBottom() + mShadowWidth);
         mDrawable.draw(canvas);
-//        drawShadowLayer(canvas);
-//        drawShadow(canvas, ((CornerDrawable) mDrawable).getRealRect());
+        drawShadow(canvas, ((CornerDrawable) mDrawable).getRealRect());
     }
 
     private void updateCornerDrawable() {
