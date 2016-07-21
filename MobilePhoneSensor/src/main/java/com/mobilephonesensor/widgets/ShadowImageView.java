@@ -6,20 +6,16 @@ import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapShader;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.DashPathEffect;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.PathMeasure;
 import android.graphics.PixelFormat;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffXfermode;
-import android.graphics.RadialGradient;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Shader;
-import android.graphics.Xfermode;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
@@ -47,8 +43,19 @@ public class ShadowImageView extends ImageView {
             this.value = value;
         }
 
-        public int getValue() {
-            return value;
+        public static Shape fromValue(int shape) {
+            Shape result;
+            switch (shape) {
+                case 1:
+                    result = Shape.OVAL;
+                    break;
+                case 2:
+                    result = Shape.CIRCLE;
+                    break;
+                default:
+                    result = Shape.RECT;
+            }
+            return result;
         }
     }
 
@@ -61,7 +68,7 @@ public class ShadowImageView extends ImageView {
      *
      * @see Shape
      */
-    private final int SHAPE;
+    public Shape mShape;
 
     /* 圆角半径 */
     private int mCornerRadius;
@@ -94,6 +101,10 @@ public class ShadowImageView extends ImageView {
     private ScaleType mScaleType = ScaleType.MATRIX;
 
     private int mRes = 0;
+
+    public Shape getShape() {
+        return mShape;
+    }
 
     public int getCornerRadius() {
         return mCornerRadius;
@@ -185,7 +196,7 @@ public class ShadowImageView extends ImageView {
     }
 
     public ShadowImageView(Context context) {
-        this(context, null);
+        super(context);
     }
 
     public ShadowImageView(Context context, AttributeSet attrs) {
@@ -195,8 +206,8 @@ public class ShadowImageView extends ImageView {
     public ShadowImageView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.ShadowImageView);
-        SHAPE = ta.getInt(R.styleable.ShadowImageView_siv_shape, Shape.RECT.value);
-
+        final int shape = ta.getInt(R.styleable.ShadowImageView_siv_shape, Shape.RECT.value);
+        mShape = Shape.fromValue(shape);
         mCornerRadius = ta.getDimensionPixelOffset(R.styleable.ShadowImageView_siv_cornerRadius, 0);
         mCornerTLRadius = ta.getDimensionPixelOffset(R.styleable.ShadowImageView_siv_cornerTLRadius, mCornerRadius);
         mCornerTRRadius = ta.getDimensionPixelOffset(R.styleable.ShadowImageView_siv_cornerTRRadius, mCornerRadius);
@@ -268,22 +279,22 @@ public class ShadowImageView extends ImageView {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        /* 这里并没有调用super.onDraw方法所以此控件对
-         * 是无效的android:cropToPadding
+        /* ***********************************
+         * 这里并没有调用super.onDraw方法所以此控
+         * 件对android:cropToPadding属性是无效的
          * */
-
         if (mDrawable == null) {
             return;
         }
-        final CornerDrawable d = (CornerDrawable) mDrawable;
         //设置padding(由于没有重写super.onDraw所以padding需要单独处理)
-        d.setPadding(getPaddingLeft() + mShadowWidth
-                , getPaddingTop() + mShadowWidth
-                , getPaddingRight() + mShadowWidth
-                , getPaddingBottom() + mShadowWidth);
+        ((CornerDrawable) mDrawable).setPadding(
+                getPaddingLeft() + mShadowWidth,
+                getPaddingTop() + mShadowWidth,
+                getPaddingRight() + mShadowWidth,
+                getPaddingBottom() + mShadowWidth);
         mDrawable.draw(canvas);
-        final Rect bounds = d.getRealBounds();
-        drawShadow(canvas, bounds);
+//        drawShadowLayer(canvas);
+//        drawShadow(canvas, ((CornerDrawable) mDrawable).getRealRect());
     }
 
     private void updateCornerDrawable() {
@@ -299,7 +310,7 @@ public class ShadowImageView extends ImageView {
                         , mBorderWidth
                         , mBorderColor
                         , mScaleType
-                        , SHAPE);
+                        , mShape);
     }
 
     /**
@@ -325,7 +336,8 @@ public class ShadowImageView extends ImageView {
         drawBottomShadow(left, right, bottom, canvas);
 
         mPaint.setStyle(Paint.Style.STROKE);
-        mPaint.setStrokeWidth(mShadowWidth);
+        mPaint.setStrokeWidth(1);
+        mShadowColorGroup = makeGradientGroup(mShadowStartColor, mShadowEndColor, mShadowWidth, new int[mShadowWidth]);
         drawTLShadow(canvas, top, left);
         drawTRShadow(canvas, top, right);
         drawBRShadow(canvas, right, bottom);
@@ -422,18 +434,24 @@ public class ShadowImageView extends ImageView {
         mPaint.setShader(null);
     }
 
+    private RectF mTLRect;
+
     private void drawTLShadow(Canvas canvas, int top, int left) {
         if (mCornerTLRadius <= 0) {
             return;
         }
-        final float diameter = (mCornerTLRadius + mShadowWidth / 2) * 2;
+        final float diameter = mCornerTLRadius * 2;
         final float oLeft = left - mShadowWidth / 2;
         final float oTop = top - mShadowWidth / 2;
         final float oRight = diameter + oLeft;
         final float oBottom = diameter + top;
-        RectF oval = new RectF(oLeft, oTop, oRight, oBottom);
-        drawArcShadow(canvas, oval, 0);
+        if (mTLRect == null) {
+            mTLRect = new RectF(oLeft, oTop, oRight, oBottom);
+        }
+        drawArcShadow(canvas, mTLRect, 0);
     }
+
+    private RectF mTRRect;
 
     private void drawTRShadow(Canvas canvas, int top, int right) {
         if (mCornerTRRadius <= 0) {
@@ -444,9 +462,13 @@ public class ShadowImageView extends ImageView {
         final float oRight = right + mShadowWidth / 2;
         final float oBottom = diameter + oTop;
         final float oLeft = oRight - diameter;
-        RectF oval = new RectF(oLeft, oTop, oRight, oBottom);
-        drawArcShadow(canvas, oval, 1);
+        if (mTRRect == null) {
+            mTRRect = new RectF(oLeft, oTop, oRight, oBottom);
+        }
+        drawArcShadow(canvas, mTRRect, 1);
     }
+
+    private RectF mBRRect;
 
     private void drawBRShadow(Canvas canvas, int right, int bottom) {
         if (mCornerBRRadius <= 0) {
@@ -457,9 +479,13 @@ public class ShadowImageView extends ImageView {
         final float oBottom = bottom + mShadowWidth / 2;
         final float oLeft = oRight - diameter;
         final float oTop = oBottom - diameter;
-        RectF oval = new RectF(oLeft, oTop, oRight, oBottom);
-        drawArcShadow(canvas, oval, 2);
+        if (mBRRect == null) {
+            mBRRect = new RectF(oLeft, oTop, oRight, oBottom);
+        }
+        drawArcShadow(canvas, mBRRect, 2);
     }
+
+    private RectF mBLRect;
 
     private void drawBLShadow(Canvas canvas, int left, int bottom) {
         if (mCornerBLRadius <= 0) {
@@ -470,14 +496,17 @@ public class ShadowImageView extends ImageView {
         final float oBottom = bottom + mShadowWidth / 2;
         final float oTop = oBottom - diameter;
         final float oRight = oLeft + diameter;
-        RectF oval = new RectF(oLeft, oTop, oRight, oBottom);
-        drawArcShadow(canvas, oval, 3);
+        if (mBLRect == null) {
+            mBLRect = new RectF(oLeft, oTop, oRight, oBottom);
+        }
+        drawArcShadow(canvas, mBLRect, 3);
     }
 
     private void drawArcShadow(Canvas canvas, RectF oval, int orientation) {
-        final float radii = (oval.right - oval.left) / 2;
-        final float centerX = oval.left + radii;
-        final float centerY = oval.top + radii;
+        final float top = oval.top + mShadowWidth / 2;
+        final float left = oval.left + mShadowWidth / 2;
+        final float right = oval.right - mShadowWidth / 2;
+        final float bottom = oval.bottom - mShadowWidth / 2;
         float start = 0;
         final float sweep = 90;
         switch (orientation) {
@@ -494,18 +523,85 @@ public class ShadowImageView extends ImageView {
                 start = 90;
                 break;
         }
-        float shaderRadii = radii + mShadowWidth / 2;
-        RadialGradient gradient = new RadialGradient(centerX
-                , centerY
-                , shaderRadii
-                , mShadowStartColor
-                , mShadowEndColor
-                , Shader.TileMode.CLAMP);
         canvas.save();
-        mPaint.setShader(gradient);
-        canvas.drawArc(oval, start, sweep, false, mPaint);
+        int[] group = makeGradientGroup(mShadowStartColor, mShadowEndColor, mShadowWidth, new int[mShadowWidth]);
+        for (int i = 1; i < mShadowWidth + 1; i++) {
+            mPaint.setColor(group[i - 1]);
+            final RectF rectF = new RectF(left - i, top - i, right + i, bottom + i);
+            canvas.drawArc(rectF, start, sweep, false, mPaint);
+        }
         canvas.restore();
-        mPaint.setShader(null);
+    }
+
+    private void drawShadowLayer(Canvas canvas) {
+        float[] radii = new float[]{mCornerTLRadius, mCornerTLRadius
+                , mCornerTRRadius, mCornerTRRadius
+                , mCornerBRRadius, mCornerBRRadius
+                , mCornerBLRadius, mCornerBLRadius};
+        final RectF rf = ((CornerDrawable) mDrawable).getRealRectF();
+        RectF copyF = new RectF(rf.left, rf.top, rf.right, rf.bottom);
+        mPaint.setStyle(Paint.Style.STROKE);
+        mPaint.setStrokeWidth(1);
+        final int[] group = makeGradientGroup(mShadowStartColor, mShadowEndColor, mShadowWidth, new int[mShadowWidth]);
+        for (int i = 0; i < mShadowWidth; i++) {
+            mShadowPath.reset();
+            mPaint.setColor(group[i]);
+//            mShadowPath.addRoundRect(copyF, radii, Path.Direction.CW);
+//            canvas.drawPath(mShadowPath, mPaint);
+            mShadowPath.close();
+
+            copyF.set(copyF.left - i, copyF.top - i, copyF.right + i, copyF.bottom + i);
+
+            radii[0] = radii[1] = radii[0] + i;
+            radii[2] = radii[3] = radii[2] + i;
+            radii[4] = radii[5] = radii[4] + i;
+            radii[6] = radii[7] = radii[6] + i;
+        }
+    }
+
+    private int[] mShadowColorGroup;
+
+    private int[] makeGradientGroup(int from, int to, int n, int[] group) {
+        int r = getR32(from) << 23;
+        int g = getG32(from) << 23;
+        int b = getB32(from) << 23;
+        int a = getA32(from) << 23;
+        int dr = ((getR32(to) << 23) - r) / (n - 1);
+        int dg = ((getG32(to) << 23) - g) / (n - 1);
+        int db = ((getB32(to) << 23) - b) / (n - 1);
+        int da = ((getA32(to) << 23) - a) / (n - 1);
+
+        for (int i = 0; i < n; i++) {
+            final int newColor = newColorInt(r >> 23, g >> 23, b >> 23, a >> 23);
+            group[i] = newColor;
+            r += dr;
+            g += dg;
+            b += db;
+            a += da;
+        }
+
+        return group;
+    }
+
+    // 访问从进行颜色的红色分量
+    private  int getR32(int c) {
+        return (c >>  0) & 0xFF;
+    }
+
+    private  int getG32(int c) {
+        return (c >>  8) & 0xFF;
+    }
+
+    private  int getB32(int c) {
+        return (c >> 16) & 0xFF;
+    }
+
+    private  int getA32(int c) {
+        return (c >> 24) & 0xFF;
+    }
+
+    private int newColorInt(int r, int g, int b, int a) {
+        return (r << 0) | ( g << 8) | (b << 16) | (a << 24);
     }
 
     private Bitmap drawable2Bitmap(Drawable drawable) {
@@ -561,7 +657,7 @@ public class ShadowImageView extends ImageView {
 
         private float[] mBorderRadii = new float[]{0, 0, 0, 0, 0, 0, 0, 0};
 
-        private int mShape;
+        private Shape mShape;
 
         private ScaleType mScaleType = null;
 
@@ -603,7 +699,7 @@ public class ShadowImageView extends ImageView {
                 return new CornerDrawable(bitmap, r);
         }
 
-        public void updateValues(int rTL, int rTR, int rBR, int rBL, int borderWidth, int borderColor, ScaleType scaleType, int shape) {
+        public void updateValues(int rTL, int rTR, int rBR, int rBL, int borderWidth, int borderColor, ScaleType scaleType, Shape shape) {
             mShape = shape;
             mScaleType = scaleType;
             mRadiusRadii[0] = mRadiusRadii[1] = rTL;
@@ -666,13 +762,13 @@ public class ShadowImageView extends ImageView {
                 adjustFillBounds();
             }
             switch (mShape) {
-                case 1://oval
+                case OVAL://oval
                     canvas.drawOval(mFillBounds, mFillPaint);
                     if (isBorder) {
                         canvas.drawOval(mFillBounds, mBorderPaint);
                     }
                     break;
-                case 2://circle
+                case CIRCLE://circle
                     break;
                 default://rect
                     mPath.addRoundRect(mFillBounds, mRadiusRadii, Path.Direction.CW);
@@ -728,11 +824,18 @@ public class ShadowImageView extends ImageView {
             return mFillPaint.getAlpha() > 0 ? PixelFormat.TRANSLUCENT : PixelFormat.OPAQUE;
         }
 
-        public Rect getRealBounds() {
+        public Rect getRealRect() {
             if (mBorderWidth <= 0)
                 return new Rect((int) mFillBounds.left, (int)mFillBounds.top, (int) mFillBounds.right, (int) mFillBounds.bottom);
             else
                 return new Rect((int) mBorderBounds.left, (int)mBorderBounds.top, (int) mBorderBounds.right, (int) mBorderBounds.bottom);
+        }
+
+        public RectF getRealRectF() {
+            if (mBorderWidth <= 0)
+                return mFillBounds;
+            else
+                return mBorderBounds;
         }
 
         /**
@@ -860,7 +963,7 @@ public class ShadowImageView extends ImageView {
          * @param src
          * @param newWidth
          * @param newHeight
-         * @param type      三种模式：0裁剪右下角新图取左上角，1为裁剪边缘新图取中间，2裁剪左下角新图取右上角
+         * @param type      三种模式：0裁剪右下角新图取左上角，1裁剪边缘新图取中间，2裁剪左下角新图取右上角
          * @return
          */
         private Bitmap cropBitmap(Bitmap src, int newWidth, int newHeight, int type) {
